@@ -58,12 +58,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [ -f .github/workflows/build.yml ]; then
-            cp .github/workflows/build.yml .github/workflows/build.yml.source
+            cp .github/workflows/build.yml build.yml.source
+            rm -f .github/workflows/build.yml
           fi
           git add -A
-          # GitHub Actions GITHUB_TOKEN cannot push workflow files; stage
-          # the source workflow under a non-executable suffix for API install.
-          git reset -q -- .github/workflows/build.yml || true
           if git diff --cached --quiet; then
             echo "No extracted changes to commit."
           else
