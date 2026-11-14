@@ -44,6 +44,22 @@ You can download these and select them in VCC under CPU, and under FD502 disk co
 
 DOWNLOAD HERE! https://www.facebook.com/share/p/1MbmLtcLpH/
 
+## Portable EDB first-run files
+
+For the EDB portable profile, keep these companion files beside `Vcc.exe`:
+
+- `coco3_201_edb.rom` — external CoCo 3 BASIC ROM.
+- `disk_211_edb.rom` — external FD-502 disk-controller ROM.
+- `custom.keymap` — portable custom keyboard map.
+
+A new configuration defaults the keyboard layout to **Custom** and looks for
+`custom.keymap` in the application directory. The initial hard reset is
+performed after the MPI and its FD-502 slot are loaded, so the configured CoCo
+and disk-controller ROMs are active before the first emulated instruction.
+App-local keymap paths are stored relative to the executable directory so the
+portable folder can be moved as a unit. If `custom.keymap` is absent or cannot
+be read, VCC falls back to its built-in CoCo keyboard layout for that session.
+
 ## Features
 VCC emulates a stock 128k CoCo 3 and additional products, including:
 - **Tandy MultiPak Interface (MPI)**: Four expansion slots.
