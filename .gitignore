@@ -1,0 +1,34 @@
+#OS files
+[Tt]humbs.db
+*.DS_Store
+
+*.o
+*.a
+*.stackdump
+
+
+# Visual Studio
+.vs
+*.obj
+*.dll
+*.exe
+*.ncb
+*.vcproj.*
+*.suo
+*.sdf
+*.opensdf
+*.pch
+*.pch.*
+*.gch
+*.aps
+*.vscode
+
+__obj
+__bin
+
+*.opendb
+*.db
+*.user
+*.swp
+*.*~
+*~

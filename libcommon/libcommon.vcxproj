@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Legacy|Win32">
+      <Configuration>Legacy</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{e0aa25bd-5527-475f-8d8b-b549a6311b0c}</ProjectGuid>
+    <RootNamespace>libcommon</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="..\vcc-base.props" />
+  <PropertyGroup>
+    <ConfigurationType Condition="'$(LinkageType)' == 'Static'">StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'" Label="Configuration">
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\vcc-debug.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\vcc-legacy.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\vcc-release.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <ClCompile>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+    </ClCompile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">
+    <LibraryPath>"$(ProgramFiles(x86))\Windows Kits\8.1\Lib\winv6.3\um\x86;$(LibraryPath)"</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions Condition="'$(LinkageType)' == 'Static'">WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Legacy|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions Condition="'$(LinkageType)' == 'Static'">WIN32;_LEGACY_VCC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/arch:SSE</AdditionalOptions>
+    </ClCompile>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>Shlwapi.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions Condition="'$(LinkageType)' == 'Static'">WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\bus\basic_cartridge.cpp" />
+    <ClCompile Include="src\bus\cpak_cartridge.cpp" />
+    <ClCompile Include="src\bus\rom_cartridge.cpp" />
+    <ClCompile Include="src\bus\cartridge_loader.cpp" />
+    <ClCompile Include="src\bus\cartridge_menu.cpp" />
+    <ClCompile Include="src\util\settings.cpp" />
+    <ClCompile Include="src\util\filesystem.cpp" />
+    <ClCompile Include="src\util\DialogOps.cpp" />
+    <ClCompile Include="src\util\Fileops.cpp" />
+    <ClCompile Include="src\util\logger.cpp" />
+    <ClCompile Include="src\util\fileutil.cpp" />
+    <ClCompile Include="src\util\coreutil.cpp" />
+    <ClCompile Include="src\devices\cloud9.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\vcc\bus\basic_cartridge.h" />
+    <ClInclude Include="include\vcc\bus\cartridge.h" />
+    <ClInclude Include="include\vcc\bus\cartridge_callbacks.h" />
+    <ClInclude Include="include\vcc\bus\cartridge_loader.h" />
+    <ClInclude Include="include\vcc\bus\cartridge_menu.h" />
+    <ClInclude Include="include\vcc\bus\dll_deleter.h" />
+    <ClInclude Include="include\vcc\bus\cpak_cartridge.h" />
+    <ClInclude Include="include\vcc\bus\cpak_cartridge_definitions.h" />
+    <ClInclude Include="include\vcc\bus\null_cartridge.h" />
+    <ClInclude Include="include\vcc\bus\rom_cartridge.h" />
+    <ClInclude Include="include\vcc\util\DialogOps.h" />
+    <ClInclude Include="include\vcc\util\FileOps.h" />
+    <ClInclude Include="include\vcc\util\interrupts.h" />
+    <ClInclude Include="include\vcc\util\limits.h" />
+    <ClInclude Include="include\vcc\util\logger.h" />
+    <ClInclude Include="include\vcc\util\fileutil.h" />
+    <ClInclude Include="include\vcc\util\textutil.h" />
+    <ClInclude Include="include\vcc\util\coreutil.h" />
+    <ClInclude Include="include\vcc\util\settings.h" />
+    <ClInclude Include="include\vcc\util\critical_section.h" />
+    <ClInclude Include="include\vcc\util\filesystem.h" />
+    <ClInclude Include="include\vcc\devices\cloud9.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

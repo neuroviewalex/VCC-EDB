@@ -1,0 +1,49 @@
+// Used by mpi.rc
+//
+#define IDS_MODULE_NAME                 1
+#define IDS_CATNUMBER                   2
+#define IDS_VERISON                     3
+#define IDS_DESCRIPTION                 4
+
+#define IDD_DIALOG1                     101
+#define IDD_POPUP_MENU                  102
+
+#define IDC_PAKSELECT                   1000
+
+#define IDC_EDIT1                       1001
+#define IDC_EDIT2                       1002
+#define IDC_EDIT3                       1003
+#define IDC_EDIT4                       1004
+
+#define IDC_SELECT1                     1011
+#define IDC_SELECT2                     1012
+#define IDC_SELECT3                     1013
+#define IDC_SELECT4                     1014
+
+#define IDC_INSERT1                     1021
+#define IDC_INSERT2                     1022
+#define IDC_INSERT3                     1023
+#define IDC_INSERT4                     1024
+
+// Don't change order of the next two
+#define IDC_LOAD_DLL                    1031
+#define IDC_LOAD_ROM                    1032
+
+#define IDC_MODINFO                     1100
+#define IDC_PERSIST_PAK                 1101
+#define IDC_SCS_DISABLE                 1102
+#define IDC_RESET                       1103
+
+#define ID_FILE_RESET                   40005 // From vcc/resource.h
+
+extern HINSTANCE gModuleInstance;
+// Next default values for new objects
+//
+#ifdef APSTUDIO_INVOKED
+#ifndef APSTUDIO_READONLY_SYMBOLS
+#define _APS_NEXT_RESOURCE_VALUE        103
+#define _APS_NEXT_COMMAND_VALUE         40006
+#define _APS_NEXT_CONTROL_VALUE         1105
+#define _APS_NEXT_SYMED_VALUE           101
+#endif
+#endif
