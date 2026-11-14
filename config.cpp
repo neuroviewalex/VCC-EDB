@@ -205,6 +205,9 @@ void InitialLoadConfig(SystemState *LCState)
 		Util::FixDirSlashes(szPath);
 		appData = std::string(szPath) + "/VCC";
 	}
+
+	// Preserve the standard VCC first-run configuration directory.
+	CreateDirectoryA(appData.c_str(), nullptr);
 	Util::copy_to_char(appData,gcAppDataPath,MAX_PATH);
 
 	// Establish settings storage (ini file) path
@@ -226,10 +229,8 @@ void InitialLoadConfig(SystemState *LCState)
 	LoadString(nullptr, IDS_APP_TITLE,AppName, MAX_LOADSTRING);
 	Setting().write("Version","Release",AppName);
 
-	// EDB-VCC: seed the complete supplied configuration once per INI file.
-	// Existing unrelated keys are preserved. After this migration, users can
-	// change and save their own settings without defaults being forced again.
-	if (Setting().read("EDB-VCC", "DefaultsV2", 0) != 1) {
+	// EDB-VCC: apply only EDB-owned settings on every launch.
+	// Individual INI writes preserve all unrelated VCC defaults and user settings.
 		Setting().write("Version", "Release",
 			"VCC 2.1.9.3 Tandy Color Computer 3 Emulator");
 
@@ -274,10 +275,7 @@ void InitialLoadConfig(SystemState *LCState)
 		Setting().write("FD-502 AutoSequence", "MemoryAddress", 32512);
 		Setting().write("FD-502 AutoSequence", "Wrap", 1);
 
-		Setting().flush();
-		Setting().write("EDB-VCC", "DefaultsV2", 1);
-		Setting().flush();
-	}
+	Setting().flush();
 
 	// Initial load settings
 	ReadIniFile();
