@@ -416,16 +416,21 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 		reinterpret_cast<void*>(cpak_callbacks.read_memory_byte),
 		reinterpret_cast<void*>(cpak_callbacks.set_cpu_memory_write_watch));
 
+	DLOG_C("MPI TRACE: callback table logged, slot %u\n", mpi_slot);
+
 	std::size_t SlotId = mpi_slot + 1;
 
 	// ctx is passed to the loader but not to cartridge DLL's
+	DLOG_C("MPI TRACE: before slot adapter construction, slot %u\n", mpi_slot);
 	auto* parent = this;
 	auto slot_adapter = std::make_unique<cartridge_slot_adapter>(
 		mpi_slot,
 		*callbacks_,
 		*parent );
+	DLOG_C("MPI TRACE: after slot adapter construction, slot %u\n", mpi_slot);
 
 	DLOG_C("load cart %d  %s\n",mpi_slot,filename);
+	DLOG_C("MPI TRACE: before load_cartridge, slot %u\n", mpi_slot);
 
 	auto loadedCartridge = VCC::Core::load_cartridge(
 		filename,
@@ -434,6 +439,7 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 		callbacks_->configuration_path(),    // ini file name
 		gVccWnd,
 		cpak_callbacks);
+	DLOG_C("MPI TRACE: after load_cartridge, slot %u, result %d\n", mpi_slot, static_cast<int>(loadedCartridge.load_result));
 
 	if (loadedCartridge.load_result != mount_status_type::success) {
 		// Tell user why load failed
@@ -465,8 +471,11 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 		move(loadedCartridge.cartridge)
 	};
 
+	DLOG_C("MPI TRACE: before cartridge start, slot %u\n", mpi_slot);
 	slots_[mpi_slot].start();
+	DLOG_C("MPI TRACE: after cartridge start, slot %u\n", mpi_slot);
 	slots_[mpi_slot].reset();
+	DLOG_C("MPI TRACE: after cartridge reset, slot %u\n", mpi_slot);
 
 	SendMessage(gVccWnd,WM_VCC_UPD_MENU,(WPARAM) 0,(LPARAM) 0);
 	return loadedCartridge.load_result;
