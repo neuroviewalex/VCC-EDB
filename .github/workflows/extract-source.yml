@@ -3,8 +3,6 @@ on:
   push:
     branches:
       - restore-vcc-source-from-zip
-    paths:
-      - .github/workflows/extract-source.yml
 permissions:
   contents: write
 jobs:
