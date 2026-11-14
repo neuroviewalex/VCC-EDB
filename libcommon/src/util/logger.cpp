@@ -37,9 +37,7 @@ void PrintLogC(const char* fmt, ...)
     vsnprintf(msg, 512, fmt, args);
     va_end(args);
 
-    // A separate console window is opt-in. Normal release builds send
-    // diagnostic output to the debugger and never create a Logging Window.
-#ifdef USE_LOGGING_CONSOLE
+    // Restore the original default Logging Window behavior.
     if (IsDebuggerPresent()) {
         OutputDebugStringA(msg);
         return;
@@ -55,9 +53,6 @@ void PrintLogC(const char* fmt, ...)
         }
     }
     WriteFile(hLog_Out,msg,strlen(msg),nullptr,nullptr);
-#else
-    OutputDebugStringA(msg);
-#endif
 }
 
 // PrintLogF - Put formatted string to the log file
