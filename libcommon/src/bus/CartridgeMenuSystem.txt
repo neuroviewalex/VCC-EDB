@@ -1,0 +1,73 @@
+
+# VCC Export Based Cartridge Menu System
+
+This replaces per‑item callbacks with a export‑based model for exchanging menu
+items between cartridge DLLs, Multipak (MPI), and the PakInterface host.
+
+Concept:
+
+- Each cartridge DLL creates an internal list of it's menu items as needed.
+- DLL's expose an export that returns menu items from the list on demand.
+- MPI aggregates child cartridge menus, applies slot‑based ID biasing, and returns a
+  unified list to the host.
+- The host pakinterface rebuilds the UI menu from the aggregated list.
+- DLLs notify the host of menu changes using a single Windows message.
+- Clear separation of responsibilities:
+  - DLLs own their menu state.
+  - MPI aggregates and biases.
+  - Host renders.
+- The export signature remains stable even if internal implementations change.
+
+---
+
+## Cartridge DLL
+
+- Sends WM_VCC_UPD_MENU to the host on internal state changes that affect its menu.
+- Keeps a static list of menu items that represents it's internal state.
+- Implements a GetMenuItemList(item,index) export that:
+  - Updates the list as required (see note)
+  - Accepts a index that indicate which entry is desired.
+  - Returns the entry at that index in the item buffer.
+  - Returns false if the entry does not exist.
+
+Notes:
+
+If the item buffer is a nullptr the DLL returns false.
+If the index is above MAX_MENU_ITEMS DLL returns false.
+An index of zero indicates the DLL's internal list should be refreshed.
+	- DLL updates / recreates it's internal list as required.
+	- DLL returns the first item if it exists, otherwise false.
+For indexes above zero the DLL simply returns the item or false.
+Cartridge plumbing guarantees that DLL's who don't expose the actual
+export will return false when call is attempted.
+
+---
+
+## Multipak (MPI)
+
+MPI acts as an aggregator and applies deterministic slot‑based menu ID biasing.
+The MPI is only permitted to be installed in the boot slot. (Coco side slot)
+
+MPI:
+
+- Maintains references to each child cartridge’s menu export.
+- When its export is called:
+  - If index is zero it refreshes it's own menu items.
+    - Calls each child cartridge’s export to retrieve their items.
+    - Applies slot‑based menu ID biasing:
+  - Merges all items into a single unified list.
+- Returns item from the list indicated by the index.
+
+---
+
+## VCC
+
+The host:
+
+- Creates the master menu item list from which the cartridge menu is drawn
+- Listens for WM_VCC_UPD_MENU from any DLL including the MPI.
+- On receiving the message, updates it's list using calls to the boot slot's
+  (slot 0) export and rebuilds the menu.
+
+The host only sees a flat, final list of menu items.
+

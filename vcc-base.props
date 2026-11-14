@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This is included first in every VCC project -->
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- Add a default Manifest to keep defender happy -->
+  <ItemDefinitionGroup>
+    <Link>
+      <GenerateManifest>true</GenerateManifest>
+      <EmbedManifest>true</EmbedManifest>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
+      <UACUIAccess>false</UACUIAccess>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <!-- Define linkage type: Static or Dynamic, default is Static -->
+    <LinkageType>Static</LinkageType>
+    <!-- Output and Intermediate directories -->
+    <OutDir>$(SolutionDir)__bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)__obj\$(Platform)\$(Configuration)\$(ProjectName)\int\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup Condition="'$(LinkageType)' == 'Dynamic'">
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BrowseInformation>false</BrowseInformation>
+      <AdditionalIncludeDirectories>$(SolutionDir)libcommon/include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+</ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(LinkageType)' == 'Static'">
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>USE_STATIC_LIB;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BrowseInformation>false</BrowseInformation>
+      <AdditionalIncludeDirectories>$(SolutionDir)libcommon/include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>USE_STATIC_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>
+

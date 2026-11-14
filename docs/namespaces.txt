@@ -1,0 +1,26 @@
+
+We let namspaces get a bit overboard. Namespaces are for loosely
+grouping objects and preventing object name collisions. They
+should not be used to over classify sources or to define directory
+or common library structures.
+
+Also we let the case of the VCC namespace change and we have 
+namespaces the use either VCC:: or vcc::  This gains nothing
+but confusion.  I see two choices here. a) go all lowercase or 
+b) use CamelCase.  Since we previously had CamelCase I decided
+to return to it.
+
+After applying CamelCase there is now the following:
+
+VCC::			   // Any VCC object
+VCC::Core          // VCC core objects
+VCC::UI            // VCC user interface objects
+VCC::Util          // VCC utility objects
+VCC::Debugger      // Coco Debugger objects
+VCC::Debugger::UI  // Coco Debugger UI objects
+VCC::Device		   // VCC device objects
+
+I used 'sed -i' modify all namespaces to this standard.  If CamelCase
+causes much heartburn it is simple to use sed to make them all
+lowercase.  If done properly renaming the namespaces should cause
+no effect on compiled code.

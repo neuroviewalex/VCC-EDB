@@ -1,0 +1,246 @@
+// Protect this file from the resource editor
+// All edits should be done by hand
+
+#ifdef APSTUDIO_INVOKED
+#error Fd502.rc is not editable by Visual C++, edit it by hand.
+#endif //APSTUDIO_INVOKED
+
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "winres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""winres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+// DO NOT REMOVE until becker.dll is retired.  Then FD502 becker becomes permanant.
+#define COMBINE_BECKER
+
+IDD_CONFIG DIALOGEX 0, 0, 268, 185
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Floppy Configuration"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    GROUPBOX        "Dos Image",IDC_STATIC,3,3,260,65,BS_CENTER
+    RADIOBUTTON     "Disk Basic (disk11.rom file must be present in VCC folder)",IDC_TRSDOS,7,13,195,10,WS_TABSTOP
+    RADIOBUTTON     "RGB Dos (rgbdos.rom file must be present in VCC folder)",IDC_RGB,7,25,192,10,WS_TABSTOP
+    RADIOBUTTON     "External Rom Image :",IDC_EXTROM,7,37,79,10,WS_TABSTOP
+    EDITTEXT        IDC_ROMPATH,9,49,218,14,ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    PUSHBUTTON      "Browse",IDC_BROWSE,230,49,29,14
+    CONTROL         "OverClock Disk Drive",IDC_TURBO,"Button",BS_AUTOCHECKBOX     | WS_TABSTOP,5,75,90,10
+    CONTROL         "Persistent Disk Images",IDC_PERSIST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,87,90,10
+    CONTROL         "Disto Clock [0xFF50-51]",IDC_CLOCK,"Button",BS_AUTOCHECKBOX  | WS_TABSTOP,5,99,90,10
+
+#ifdef COMBINE_BECKER
+    CONTROL         "Becker Drivewire [0xFF41-42]",IDC_BECKER_ENAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,110,75,130,10
+    LTEXT           "Server Address",IDC_STATIC,108,87,50,10
+    LTEXT           "Server Port",IDC_STATIC,120,99,40,10
+    EDITTEXT        IDC_BECKER_HOST,160,87,103,10,ES_AUTOHSCROLL
+    EDITTEXT        IDC_BECKER_PORT,160,100,30,10,ES_NUMBER
+#endif
+
+    GROUPBOX        "Physical Disks",IDC_STATIC,3,118,260,43,BS_CENTER
+    LTEXT           "A:",IDC_STATIC,10,128,8,8,
+    LTEXT           "B:",IDC_STATIC,10,147,8,8,
+    COMBOBOX        IDC_DISKA,19,126,59,49,CBS_DROPDOWN | WS_VSCROLL
+    COMBOBOX        IDC_DISKB,19,144,59,51,CBS_DROPDOWN | WS_VSCROLL
+    LTEXT           "Windows 2000 or higher and FDRAWREAD driver are required for Physical Disk access",IDC_STATIC,85,133,141,22
+    PUSHBUTTON      "Cancel",IDCANCEL,40,166,50,14
+    DEFPUSHBUTTON   "OK",IDOK,160,166,50,14
+END
+
+IDD_NEWDISK DIALOG 0, 0, 186, 70
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Create Disk Image"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "Yes",IDOK,106,52,32,14
+    PUSHBUTTON      "No",IDCANCEL,143,52,32,14
+    RADIOBUTTON     "JVC",IDC_JVC,8,20,33,10,BS_LEFT | BS_VCENTER
+    GROUPBOX        "Image Type",IDC_STATIC,4,10,47,42
+    RADIOBUTTON     "DMK",IDC_DMK,8,30,33,10,BS_LEFT | BS_VCENTER
+    RADIOBUTTON     "VDK",IDC_VDK,8,40,33,10,BS_LEFT | BS_VCENTER
+    RADIOBUTTON     "35",IDC_TR35,62,20,24,10
+    GROUPBOX        "Tracks",IDC_STATIC,54,10,41,42,BS_CENTER
+    RADIOBUTTON     "40",IDC_TR40,62,30,24,10
+    RADIOBUTTON     "80",IDC_TR80,62,40,24,10
+    CONTROL         "Double Sided",IDC_DBLSIDE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,3,57,61,10
+    LTEXT           "",IDC_TEXT1,105,12,68,8
+    LTEXT           "File does not exist.",IDC_STATIC,105,25,70,8
+    LTEXT           "Create the file?",IDC_STATIC,105,35,48,8
+END
+
+
+IDD_AUTOSEQUENCE DIALOGEX 0, 0, 330, 224
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Drive 3 AutoSequence Playlist"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    LTEXT           "Memory-write address (hex):",IDC_STATIC,8,9,104,10
+    EDITTEXT        IDC_AS_ADDRESS,114,7,56,14,ES_AUTOHSCROLL | ES_UPPERCASE
+    CONTROL         "Wrap after last entry",IDC_AS_WRAP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,190,8,130,12
+    GROUPBOX        "Numbered DSK playlist (1-255)",IDC_STATIC,8,28,238,164,BS_CENTER
+    LISTBOX         IDC_AS_PLAYLIST,14,41,226,145,LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_BORDER | WS_TABSTOP
+    PUSHBUTTON      "Add...",IDC_AS_ADD,253,43,68,16
+    PUSHBUTTON      "Remove",IDC_AS_REMOVE,253,64,68,16
+    PUSHBUTTON      "Up",IDC_AS_UP,253,97,68,16
+    PUSHBUTTON      "Down",IDC_AS_DOWN,253,118,68,16
+    LTEXT           "0 / 255 entries",IDC_AS_COUNT,14,198,120,10
+    LTEXT           "POKE address,0 = next; 1-255 = select.",IDC_STATIC,138,198,180,10
+    DEFPUSHBUTTON   "Save",IDOK,199,209,54,14
+    PUSHBUTTON      "Cancel",IDCANCEL,261,209,54,14
+END
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_CONFIG, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 286
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 171
+    END
+
+    IDD_NEWDISK, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 182
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 67
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 2,1,9,2
+ PRODUCTVERSION 2,1,9,2
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x21L
+#else
+ FILEFLAGS 0x20L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "Tandy FD-502 with 4 Floppy Drives  & RAW support"
+            VALUE "CompanyName", "Bitrot Software"
+            VALUE "FileDescription", "DiskController"
+            VALUE "FileVersion", "2.1.8.1"
+            VALUE "InternalName", "DiskController"
+            VALUE "LegalCopyright", "Copyright � 2010"
+            VALUE "OriginalFilename", "fd502.dll"
+            VALUE "ProductName", "Vcc Module file"
+            VALUE "ProductVersion", "26-3133"
+            VALUE "SpecialBuild", "Tandy Floppy Disk Controller"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_CONFIG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_MODULE_NAME         "FD-502"
+    IDS_VERSION             "3.0.1"
+    IDS_DESCRIPTION         "Emulate FD502 floppy controller with four floppy drives.  Loads Disk Extended Color Basic (disl11.rom) or user selectable disk rom.  Also includes Becker Port for communicating with Drivewire and a Disto Clock for use with OS-9.  Uses SCS selectable disk ports.  Plugs into the Program Pak port or Multi-Pak Interface."
+#ifdef COMBINE_BECKER
+    IDS_CATNUMBER           "+ Becker"
+#else
+    IDS_CATNUMBER           "26-3133"
+#endif
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
