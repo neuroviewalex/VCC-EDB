@@ -3,6 +3,27 @@ VCC is an emulator for the Tandy Color Computer 3, designed to run on Microsoft 
 
 VCC is licensed under the GNU General Public License v3.0. See the [LICENSE](COPYING) file for more details.
 
+## VCC-EDB Features the following patches:
+
+    FD502 reset handling: corrected reset and lifecycle behavior.
+    WD1793 floppy controller: reset handling for in-flight disk transfers.
+    MPI cartridge window: refresh of window handles after cartridge changes.
+    Cartridge DLL lifecycle: initialization and cleanup fixes.
+    Plugin lifecycle: hard-disk and SDC plugin initialization/cleanup.
+
+With a new extended storage solution:
+Programmable disk-image playlist system...
+
+    Up to 255 numbered DSK images
+    Select disk using POKE &H7F00,N
+
+Additional safeguards:
+
+    Repeated identical CPU writes each detected as separate commands.
+    Disk swaps are queued until the floppy controller is idle.
+    Disk switching does not reset the CoCo.
+    Never interrupts an active disk operation.
+
 ## Features
 VCC emulates a stock 128k CoCo 3 and additional products, including:
 - **Tandy MultiPak Interface (MPI)**: Four expansion slots.
