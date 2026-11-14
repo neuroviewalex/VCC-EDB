@@ -24,6 +24,10 @@ Additional safeguards:
     Disk switching does not reset the CoCo.
     Never interrupts an active disk operation.
 
+## DOWNLOAD THE CUSTOM COCO DECB ROMS!!
+
+https://www.facebook.com/share/p/1MbmLtcLpH/
+
 ## Features
 VCC emulates a stock 128k CoCo 3 and additional products, including:
 - **Tandy MultiPak Interface (MPI)**: Four expansion slots.
