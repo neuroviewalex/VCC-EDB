@@ -187,6 +187,13 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 
 	InitSound();
 	LoadModule();
+
+	// The CoCo 3 internal ROM is read on the first hard reset, and the
+	// FD-502 external ROM is loaded as its DLL initializes/resets. Force
+	// that reset after the MPI and its child cartridges have finished loading
+	// so the configured ROMs are active before the first emulated instruction.
+	EmuState.ResetPending = 2;
+
 	SetClockSpeed(1);	//Default clock speed .89 MHZ	
 	BinaryRunning = true;
 	EmuState.EmulationRunning=AutoStart;
