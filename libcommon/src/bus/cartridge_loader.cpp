@@ -137,7 +137,16 @@ namespace VCC::Core
 		}
 
 		cartridge_loader_result details;
-		HMODULE hCart = LoadLibrary(filename.c_str());
+		// Resolve plugin imports from the plugin directory, application directory,
+		// and Windows system directories; never from the process working directory.
+#ifndef LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR
+#define LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR 0x00000100
+#endif
+#ifndef LOAD_LIBRARY_SEARCH_DEFAULT_DIRS
+#define LOAD_LIBRARY_SEARCH_DEFAULT_DIRS 0x00001000
+#endif
+		HMODULE hCart = LoadLibraryExA(filename.c_str(), nullptr,
+			LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 		details.handle.reset(hCart);
 
 		DLOG_C("cartridge_loader LoadLibrary %s %d\n", filename.c_str(), GetLastError());

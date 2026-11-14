@@ -95,18 +95,18 @@ namespace VCC::Util
 	}
 
 	//---------------------------------------------------------------
-	// Fully qualify a file based on current execution directory
-	//---------------------------------------------------------------
+	// Fully qualify a file based on the executable directory.
+	// Every relative path (including paths containing subdirectories) is
+	// anchored beside VCC.exe rather than the process working directory.
 	std::string QualifyModPath(const std::string& path)
 	{
 		if (path.empty()) return {};
 
-		std::string mod = path;
-		FixDirSlashes(mod);
-		if (mod.find('/') != std::string::npos) return mod;
+		std::filesystem::path requested(path);
+		if (requested.is_absolute())
+			return requested.lexically_normal().string();
 
-		std::string exe = Util::ModulePath(NULL);
-		std::string dir = Util::GetDirectoryPart(exe);
-		return dir + '/' + mod;
+		const std::filesystem::path executable(ModulePath(nullptr));
+		return (executable.parent_path() / requested).lexically_normal().string();
 	}
 }

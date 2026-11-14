@@ -32,10 +32,6 @@
 #include <assert.h>
 #include <string>
 
-#pragma warning(push)
-#pragma warning(disable:4091)
-#include <ShlObj.h>
-#pragma warning(pop)
 
 #include "defines.h"
 #include "resource.h"
@@ -198,29 +194,22 @@ void InitialLoadConfig(SystemState *LCState)
 	// Get sound cards from audio.cpp
 	NumberOfSoundCards=GetSoundCardList(SoundCards);
 
-	// Establish application data path
-	TCHAR szPath[MAX_PATH] {};
-	std::string appData {};
-	if (SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_APPDATA, nullptr, 0, szPath))) {
-		Util::FixDirSlashes(szPath);
-		appData = std::string(szPath) + "/VCC";
-	}
+	// EDB portable layout: application-owned configuration stays beside VCC.exe.
+	// AppDirectory() is also the default folder for custom keymaps.
+	const std::string appDirectory = ExecDirectory;
+	Util::copy_to_char(appDirectory, gcAppDataPath, MAX_PATH);
 
-	// Preserve the standard VCC first-run configuration directory.
-	CreateDirectoryA(appData.c_str(), nullptr);
-	Util::copy_to_char(appData,gcAppDataPath,MAX_PATH);
-
-	// Establish settings storage (ini file) path
+	// Preserve an explicit -ini override; otherwise use the executable directory.
 	std::string ini;
 	if (*CmdArg.IniFile) {
 		char buf[MAX_PATH];
 		if (GetFullPathNameA(CmdArg.IniFile, MAX_PATH, buf, nullptr))
 			ini = buf;
 		else
-			ini = CmdArg.IniFile; // fallback
+			ini = CmdArg.IniFile;
 		Util::FixDirSlashes(ini);
 	} else {
-		ini = appData + "/Vcc.ini";
+		ini = (std::filesystem::path(ExecDirectory) / "Vcc.ini").string();
 	}
 	Util::copy_to_char(ini, gcIniFilePath, MAX_PATH);
 
@@ -419,6 +408,10 @@ unsigned char ReadIniFile()
 	CurrentConfig.UseExtCocoRom    = Setting().read("Misc","UseExtCocoRom",0);
 	CurrentConfig.EnableOverclock  = Setting().read("Misc","Overclock",1);
 	Setting().read("Misc","ExternalBasicImage","",CurrentConfig.ExtRomFile,MAX_PATH);
+	if (*CurrentConfig.ExtRomFile) {
+		const auto romPath = Util::QualifyModPath(CurrentConfig.ExtRomFile);
+		Util::copy_to_char(romPath, CurrentConfig.ExtRomFile, MAX_PATH);
+	}
 
 	CurrentConfig.RamSize = Setting().read("Memory","RamSize",1);
 
@@ -428,8 +421,11 @@ unsigned char ReadIniFile()
 
 	Setting().read("Misc","CustomKeyMapFile","",KeyMapFilePath,MAX_PATH);
 	if (*KeyMapFilePath == '\0') {
-		strcpy(KeyMapFilePath, gcAppDataPath);
-		strcat(KeyMapFilePath, "\\custom.keymap");
+		const auto keymapPath = (std::filesystem::path(ExecDirectory) / "custom.keymap").string();
+		Util::copy_to_char(keymapPath, KeyMapFilePath, MAX_PATH);
+	} else {
+		const auto keymapPath = Util::QualifyModPath(KeyMapFilePath);
+		Util::copy_to_char(keymapPath, KeyMapFilePath, MAX_PATH);
 	}
 	if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(KeyMapFilePath);
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);

@@ -14,25 +14,8 @@ namespace VCC::Util
 			return path;
 		}
 
-		auto file_handle(CreateFile(path.c_str(), 0, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
-		if (file_handle == INVALID_HANDLE_VALUE)
-		{
-			const auto application_path = ::VCC::Util::GetDirectoryPart(::VCC::Util::ModulePath(NULL));
-			// Compose the fallback path using filesystem semantics so the
-			// directory separator is inserted when needed.
-			const auto alternate_path = (std::filesystem::path(application_path) / std::filesystem::path(path)).string();
-			file_handle = CreateFile(alternate_path.c_str(), 0, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-			if (file_handle == INVALID_HANDLE_VALUE)
-			{
-				path = alternate_path;
-			}
-		}
-
-		if (file_handle != INVALID_HANDLE_VALUE)
-		{
-			CloseHandle(file_handle);
-		}
-
-		return path;
+		// Relative MPI plugin/ROM paths are always rooted at VCC.exe.
+		// Do not probe the process working directory first.
+		return ::VCC::Util::QualifyModPath(path);
 	}
 }

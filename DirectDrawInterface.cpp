@@ -102,7 +102,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
 	g_hInstance=hInstance;
 	g_nCmdShow=nCmdShow;
-	LoadLibrary("RICHED20.DLL");
+	LoadLibraryExA("RICHED20.DLL", nullptr, 0x00000800 /* LOAD_LIBRARY_SEARCH_SYSTEM32 */);
 	LoadString(g_hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadString(g_hInstance, IDS_APP_TITLE, szWindowClass, MAX_LOADSTRING);
 	return TRUE;

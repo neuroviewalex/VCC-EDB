@@ -21,6 +21,8 @@
 #include <Windows.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <filesystem>
+#include <string>
 #include <vcc/util/FileOps.h>
 
 void ValidatePath(char *Path)
@@ -37,28 +39,34 @@ void ValidatePath(char *Path)
 	return;
 }
 
-int CheckPath( char *Path)	//Return 1 on Error
+int CheckPath(char *Path)	// Return 1 on error
 {
-	char TempPath[MAX_PATH]="";
-	HANDLE hr=nullptr;
-
-	if ((strlen(Path)==0) || (strlen(Path) > MAX_PATH))
+	if (!Path || (strlen(Path) == 0))
 		return 1;
-	hr=CreateFile(Path,0,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
-	if (hr==INVALID_HANDLE_VALUE) //File Doesn't exist
-	{
-		GetModuleFileName(nullptr,TempPath,MAX_PATH);
-		PathRemoveFileSpec(TempPath);
-		if ( (strlen(TempPath)) + (strlen(Path)) > MAX_PATH)	//Resulting path is to large Bail.
-			return 1;
 
-		strcat(TempPath,Path);
-		hr=CreateFile(TempPath,0,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);			
-		if (hr ==INVALID_HANDLE_VALUE)
+	// Relative application resources are resolved only beside VCC.exe.
+	// Never accept a same-named file from the process working directory.
+	std::filesystem::path resolved(Path);
+	if (!resolved.is_absolute()) {
+		char exePath[MAX_PATH] = {};
+		const DWORD length = GetModuleFileNameA(nullptr, exePath, MAX_PATH);
+		if (length == 0 || length >= MAX_PATH)
 			return 1;
-		strcpy(Path,TempPath);
+		resolved = std::filesystem::path(exePath).parent_path() / resolved;
 	}
-	CloseHandle(hr);
+	resolved = resolved.lexically_normal();
+
+	const std::string fullPath = resolved.string();
+	if (fullPath.size() >= MAX_PATH)
+		return 1;
+
+	HANDLE file = CreateFileA(fullPath.c_str(), 0, FILE_SHARE_READ, nullptr,
+		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+	if (file == INVALID_HANDLE_VALUE)
+		return 1;
+
+	CloseHandle(file);
+	strcpy_s(Path, MAX_PATH, fullPath.c_str());
 	return 0;
 }
 

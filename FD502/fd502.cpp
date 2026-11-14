@@ -37,6 +37,7 @@
 #include <deque>
 #include <mutex>
 #include <vector>
+#include <filesystem>
 #include "resource.h"
 #include "wd1793.h"
 #include "distortc.h"
@@ -1174,7 +1175,7 @@ void LoadConfig()  // Called on SetIniPath
 {
 	unsigned char Index=0;
 	char Temp[16]="";
-	char DiskRomPath[MAX_PATH], RGBRomPath[MAX_PATH];
+	std::string DiskRomPath, RGBRomPath;
 	char DiskName[MAX_PATH]="";
 	unsigned int RetVal=0;
 
@@ -1195,13 +1196,12 @@ void LoadConfig()  // Called on SetIniPath
 	PersistDisks=Setting().read(MS_FD502,"Persist",1);
 	CheckPath(RomFileName);
 	LoadExtRom(External,RomFileName); //JF
-	GetModuleFileName(nullptr, DiskRomPath, MAX_PATH);
-	PathRemoveFileSpec(DiskRomPath);
-	strcpy(RGBRomPath, DiskRomPath);
-	strcat(DiskRomPath, "disk11.rom");
-	strcat(RGBRomPath, "rgbdos.rom");
-	LoadExtRom(TandyDisk, DiskRomPath); // Why load?
-	LoadExtRom(RGBDisk, RGBRomPath);    // Why load?
+	const auto applicationDirectory =
+		std::filesystem::path(VCC::Util::ModulePath(nullptr)).parent_path();
+	DiskRomPath = (applicationDirectory / "disk11.rom").string();
+	RGBRomPath = (applicationDirectory / "rgbdos.rom").string();
+	LoadExtRom(TandyDisk, DiskRomPath.c_str()); // Why load?
+	LoadExtRom(RGBDisk, RGBRomPath.c_str());    // Why load?
 	if (PersistDisks)                   // TODO: Fix this, checkbox was removed
 		for (Index=0;Index<4;Index++)
 		{

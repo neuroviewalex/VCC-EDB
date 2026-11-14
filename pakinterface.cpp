@@ -34,6 +34,7 @@
 #include <vcc/util/limits.h>
 //#include <vcc/util/winapi.h>
 #include <vcc/util/logger.h>
+#include <vcc/util/fileutil.h>
 #include <vcc/util/FileOps.h>
 #include <vcc/util/DialogOps.h>
 #include <fstream>
@@ -457,11 +458,8 @@ void CartMenuActivated(unsigned int MenuID)
 
 	case 3:
 	{
-		char path[MAX_PATH];
-		GetModuleFileName(nullptr,path,MAX_PATH);
-		PathRemoveFileSpec(path);
-		strncat(path,"mpi.dll",MAX_PATH);
-		PakLoadCartridge(path);
+		const auto path = VCC::Util::QualifyModPath("mpi.dll");
+		PakLoadCartridge(path.c_str());
 		return;
     }
 	case 4:
