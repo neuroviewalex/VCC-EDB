@@ -37,22 +37,10 @@ void PrintLogC(const char* fmt, ...)
     vsnprintf(msg, 512, fmt, args);
     va_end(args);
 
-    // Restore the original default Logging Window behavior.
-    if (IsDebuggerPresent()) {
-        OutputDebugStringA(msg);
-        return;
-    }
+    // Keep diagnostic output available to attached debuggers without
+    // opening a separate console window during normal application startup.
+    OutputDebugStringA(msg);
 
-    if (hLog_Out == nullptr) {
-        AllocConsole();
-        hLog_Out = GetStdHandle(STD_OUTPUT_HANDLE);
-        SetConsoleTitle("Logging Window");
-        if (hLog_Out == NULL || hLog_Out == INVALID_HANDLE_VALUE) {
-            OutputDebugStringA(msg);
-            return;
-        }
-    }
-    WriteFile(hLog_Out,msg,strlen(msg),nullptr,nullptr);
 }
 
 // PrintLogF - Put formatted string to the log file
