@@ -408,7 +408,13 @@ multipak_cartridge::mount_status_type multipak_cartridge::mount_cartridge(
 		set_cpu_memory_write_watch_thunk
 	};
 	
-	DLOG_C("%3d %p %p %p %p %p\n",mpi_slot,cpak_callbacks);
+	DLOG_C("%3d %p %p %p %p %p\n",
+		mpi_slot,
+		reinterpret_cast<void*>(cpak_callbacks.assert_interrupt),
+		reinterpret_cast<void*>(cpak_callbacks.assert_cartridge_line),
+		reinterpret_cast<void*>(cpak_callbacks.write_memory_byte),
+		reinterpret_cast<void*>(cpak_callbacks.read_memory_byte),
+		reinterpret_cast<void*>(cpak_callbacks.set_cpu_memory_write_watch));
 
 	std::size_t SlotId = mpi_slot + 1;
 
