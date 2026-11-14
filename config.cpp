@@ -275,10 +275,10 @@ void InitialLoadConfig(SystemState *LCState)
 		Setting().write("FD-502 AutoSequence", "MemoryAddress", 32512);
 		Setting().write("FD-502 AutoSequence", "Wrap", 1);
 
-	Setting().flush();
-
-	// Initial load settings
+	// Initial load settings. ReadIniFile() populates any missing standard VCC
+	// defaults; flush only after that so a first-run INI is complete.
 	ReadIniFile();
+	Setting().flush();
 	UpdateConfig();
 
 	RefreshJoystickStatus();
