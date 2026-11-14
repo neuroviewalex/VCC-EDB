@@ -415,7 +415,7 @@ unsigned char ReadIniFile()
 
 	CurrentConfig.RamSize = Setting().read("Memory","RamSize",1);
 
-	CurrentConfig.KeyMap  = Setting().read("Misc","KeyMapIndex",0);
+	CurrentConfig.KeyMap  = Setting().read("Misc","KeyMapIndex",kKBLayoutCustom);
 	if (CurrentConfig.KeyMap>3)
 		CurrentConfig.KeyMap=0;	//Default to DECB Mapping
 
@@ -427,7 +427,14 @@ unsigned char ReadIniFile()
 		const auto keymapPath = Util::QualifyModPath(KeyMapFilePath);
 		Util::copy_to_char(keymapPath, KeyMapFilePath, MAX_PATH);
 	}
-	if (CurrentConfig.KeyMap == kKBLayoutCustom) LoadCustomKeyMap(KeyMapFilePath);
+	if (CurrentConfig.KeyMap == kKBLayoutCustom) {
+		// A portable first-run install defaults to the app-local custom.keymap.
+		// If that file is absent or unreadable, keep the keyboard usable and
+		// fall back to the built-in CoCo layout for this session.
+		if (LoadCustomKeyMap(KeyMapFilePath) != 0) {
+			CurrentConfig.KeyMap = kKBLayoutCoCo;
+		}
+	}
 	vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
 	// If bootpath is relative prepend the current module exe directory
@@ -582,8 +589,22 @@ char * GetKeyMapFilePath()
 
 void SetKeyMapFilePath(const char *Path)
 {
-	strcpy(KeyMapFilePath,Path);
-	Setting().write("Misc","CustomKeyMapFile",KeyMapFilePath);
+	// Keep the active in-memory path absolute, but persist app-local paths
+	// relative to VCC.exe so the portable folder can be moved as a unit.
+	const std::filesystem::path appDirectory =
+		std::filesystem::path(ExecDirectory).lexically_normal();
+	const std::filesystem::path selectedPath =
+		std::filesystem::path(VCC::Util::QualifyModPath(Path)).lexically_normal();
+	const std::filesystem::path relativePath =
+		selectedPath.lexically_relative(appDirectory);
+
+	Util::copy_to_char(selectedPath.string(), KeyMapFilePath, MAX_PATH);
+
+	std::string storedPath = selectedPath.string();
+	if (!relativePath.empty() && *relativePath.begin() != std::filesystem::path(".."))
+		storedPath = relativePath.string();
+
+	Setting().write("Misc","CustomKeyMapFile",storedPath);
 }
 
 /*******************************************************/
