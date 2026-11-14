@@ -268,7 +268,7 @@ void InitialLoadConfig(SystemState *LCState)
 		Setting().write("RightJoyStick", "HiResDevice", 2);
 
 		Setting().write("MPI", "SWPOSITION", 3);
-		Setting().write("MPI", "SLOT4", ""); // DIAGNOSTIC: leave FD-502 unloaded
+		Setting().write("MPI", "SLOT4", "fd502.dll");
 		Setting().write("MPI", "SLOT3", "");
 		Setting().write("MPI", "SLOT1", "");
 
