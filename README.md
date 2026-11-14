@@ -26,7 +26,23 @@ Additional safeguards:
 
 ## DOWNLOAD THE CUSTOM COCO DECB ROMS!!
 
-https://www.facebook.com/share/p/1MbmLtcLpH/
+CoCo3 EXTENDED COLOR BASIC v2.01 and DISK EXTENDED COLOR BASIC v2.11
+These ROMs can be burned and installed in your CoCo3, or used in emulators like VCC.
+Changes for CoCo3 ROM:
+
+    aesthetic improvements for boot up, no FoC (flash of color) corruption on both paths
+    path 1 is standard ECB 2.01 boot up (normal), this is when there is NO DISK CONTROLLER PRESENT. This will exit normally to ECB but it will say v2.01 so you know it has EDB auto-boot capabilities.
+    path 2 is all black, overclocked boot up, this is when there IS A DISK CONTROLLER PRESENT. hands it off to the disk controller for continued boot...
+
+Changes to DISK ROM:
+
+    aesthetic improvements for boot up, no FoC corruption on both paths.
+    path 1 is standard DECB 2.11 boot up (normal), this is when there is NO EDB BOOT DISK in drive 0 (NOR any disk with *.BAS on it)
+    path 2 is continued ALL BLACK OVERCLOCKED EBD boot, this is when there IS THE EDB BOOT DISK in drive 0 (OR any disk with *.BAS on it)
+
+You can download these and select them in VCC under CPU, and under FD502 disk controller.
+
+DOWNLOAD HERE! https://www.facebook.com/share/p/1MbmLtcLpH/
 
 ## Features
 VCC emulates a stock 128k CoCo 3 and additional products, including:
