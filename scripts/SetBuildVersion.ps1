@@ -18,7 +18,7 @@ function Replace-Exactly {
     param([string]$Text, [string]$Pattern, [string]$Replacement, [string]$Description)
     $regex = [regex]::new($Pattern, [System.Text.RegularExpressions.RegexOptions]::Multiline)
     $count = $regex.Matches($Text).Count
-    if ($count -ne 1) { throw "$Description: expected one occurrence, found $count" }
+    if ($count -ne 1) { throw "${Description}: expected one occurrence, found $count" }
     return $regex.Replace($Text, { param($match) $match.Result($Replacement) }, 1)
 }
 
