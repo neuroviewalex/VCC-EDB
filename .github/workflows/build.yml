@@ -11,6 +11,8 @@ on:
     branches:
       - main
       - '*'
+    tags:
+      - 'v[0-9]*'
   pull_request:
     branches:
       - main
@@ -45,7 +47,7 @@ jobs:
     - name: Upload Release binaries
       uses: actions/upload-artifact@v4
       with:
-        name: VCC-2.1.9.3-Release
+        name: VCC-EDB-${{ github.ref_type == 'tag' && github.ref_name || 'development' }}-Release
         path: __bin/Win32/Release/**
         if-no-files-found: error
         retention-days: 14

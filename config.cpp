@@ -221,7 +221,7 @@ void InitialLoadConfig(SystemState *LCState)
 	// EDB-VCC: apply only EDB-owned settings on every launch.
 	// Individual INI writes preserve all unrelated VCC defaults and user settings.
 		Setting().write("Version", "Release",
-			"VCC 2.1.9.3 Tandy Color Computer 3 Emulator");
+			"VCC 2.1.9.33 Tandy Color Computer 3 Emulator");
 
 		Setting().write("CPU", "DoubleSpeedClock", 140);
 		Setting().write("CPU", "FrameSkip", 1);
