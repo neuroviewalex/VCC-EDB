@@ -233,7 +233,8 @@ void InitialLoadConfig(SystemState *LCState)
 		Setting().write("Misc", "CartAutoStart", 1);
 		Setting().write("Misc", "UseExtCocoRom", 1);
 		Setting().write("Misc", "Overclock", 1);
-		Setting().write("Misc", "ExternalBasicImage", "coco3_201_edb.rom");
+		Setting().write("Misc", "ExternalBasicImage",
+			(std::filesystem::path(ExecDirectory) / "coco3_201_edb.rom").string().c_str());
 
 		Setting().write("Module", "OnBoot", "mpi.dll");
 
@@ -244,7 +245,8 @@ void InitialLoadConfig(SystemState *LCState)
 		Setting().write("DefaultPaths", "CassPath", "");
 
 		Setting().write("FD-502", "DiskRom", 0);
-		Setting().write("FD-502", "RomPath", "disk_211_edb.rom");
+		Setting().write("FD-502", "RomPath",
+			(std::filesystem::path(ExecDirectory) / "disk_211_edb.rom").string().c_str());
 		Setting().write("FD-502", "Persist", 1);
 		Setting().write("FD-502", "ClkEnable", 1);
 		Setting().write("FD-502", "TurboDisk", 1);
