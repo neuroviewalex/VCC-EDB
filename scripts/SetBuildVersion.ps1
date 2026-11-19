@@ -24,16 +24,16 @@ function Replace-Exactly {
 
 $rcPath = Join-Path $root 'Vcc.rc'
 $rc = [System.IO.File]::ReadAllText($rcPath)
-$rc = Replace-Exactly $rc '(?m)^(\s*FILEVERSION\s+)\d+,\d+,\d+,\d+' ('$1' + $numbers) 'FILEVERSION'
-$rc = Replace-Exactly $rc '(?m)^(\s*PRODUCTVERSION\s+)\d+,\d+,\d+,\d+' ('$1' + $numbers) 'PRODUCTVERSION'
-$rc = Replace-Exactly $rc '(?m)^(\s*VALUE "FileVersion",\s*")\d+\.\d+\.\d+\.\d+(")' ('$1' + $version + '$2') 'FileVersion string'
-$rc = Replace-Exactly $rc '(?m)^(\s*VALUE "ProductVersion",\s*")\d+\.\d+\.\d+\.\d+(")' ('$1' + $version + '$2') 'ProductVersion string'
-$rc = Replace-Exactly $rc '(?m)^(\s*IDS_APP_TITLE\s+")VCC-EDB v\d+\.\d+\.\d+\.\d+(")' ('$1' + $title + '$2') 'window title'
-$rc = Replace-Exactly $rc '(?m)^(\s*LTEXT\s+")VCC-EDB v\d+\.\d+\.\d+\.\d+(",IDC_STATIC)' ('$1' + $title + '$2') 'About dialog'
+$rc = Replace-Exactly $rc '(?m)^(\s*FILEVERSION\s+)\d+,\d+,\d+,\d+' ('${1}' + $numbers) 'FILEVERSION'
+$rc = Replace-Exactly $rc '(?m)^(\s*PRODUCTVERSION\s+)\d+,\d+,\d+,\d+' ('${1}' + $numbers) 'PRODUCTVERSION'
+$rc = Replace-Exactly $rc '(?m)^(\s*VALUE "FileVersion",\s*")\d+\.\d+\.\d+\.\d+(")' ('${1}' + $version + '${2}') 'FileVersion string'
+$rc = Replace-Exactly $rc '(?m)^(\s*VALUE "ProductVersion",\s*")\d+\.\d+\.\d+\.\d+(")' ('${1}' + $version + '${2}') 'ProductVersion string'
+$rc = Replace-Exactly $rc '(?m)^(\s*IDS_APP_TITLE\s+")VCC-EDB v\d+\.\d+\.\d+\.\d+(")' ('${1}' + $title + '${2}') 'window title'
+$rc = Replace-Exactly $rc '(?m)^(\s*LTEXT\s+")VCC-EDB v\d+\.\d+\.\d+\.\d+(",IDC_STATIC)' ('${1}' + $title + '${2}') 'About dialog'
 [System.IO.File]::WriteAllText($rcPath, $rc, [System.Text.UTF8Encoding]::new($false))
 
 $configPath = Join-Path $root 'config.cpp'
 $config = [System.IO.File]::ReadAllText($configPath)
-$config = Replace-Exactly $config '(?m)^([ \t]*"VCC )\d+\.\d+\.\d+\.\d+( Tandy Color Computer 3 Emulator")' ('$1' + $version + '$2') 'INI version'
+$config = Replace-Exactly $config '(?m)^([ \t]*"VCC )\d+\.\d+\.\d+\.\d+( Tandy Color Computer 3 Emulator")' ('${1}' + $version + '${2}') 'INI version'
 [System.IO.File]::WriteAllText($configPath, $config, [System.Text.UTF8Encoding]::new($false))
 Write-Host "VCC-EDB build version: $title"
