@@ -19,7 +19,7 @@ function Replace-Exactly {
     $regex = [regex]::new($Pattern, [System.Text.RegularExpressions.RegexOptions]::Multiline)
     $count = $regex.Matches($Text).Count
     if ($count -ne 1) { throw "$Description: expected one occurrence, found $count" }
-    return $regex.Replace($Text, { param($match) $Replacement }, 1)
+    return $regex.Replace($Text, { param($match) $match.Result($Replacement) }, 1)
 }
 
 $rcPath = Join-Path $root 'Vcc.rc'
