@@ -3,15 +3,15 @@
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $destination = Join-Path $root '__bin/Win32/Release'
-$archiveUrl = 'https://github.com/neuroviewalex/VCC-EDB/releases/download/v2.1.9.32/CoCo3_EDB.rar'
-$expectedSha256 = 'cac381e869ffb4fb0af1d691ab29ce37b19334c46842a5389c8c782bca0caf80'
+$archiveUrl = 'https://github.com/neuroviewalex/VCC-EDB/releases/download/v2.1.9.33/VCC-EDB-2.1.9.33-Release.zip'
+$expectedSha256 = '9c313af74edb803d0caf4708e3088ca8e15189a9e64b2775908578ebc9a09afc'
 $required = @('coco3_201_edb.rom', 'disk_211_edb.rom', 'custom.keymap')
 $sevenZip = Join-Path $env:ProgramFiles '7-Zip/7z.exe'
 if (-not (Test-Path -LiteralPath $sevenZip)) { throw '7-Zip not found on Windows runner' }
 if (-not (Test-Path -LiteralPath $destination)) { throw "Build output missing: $destination" }
 $temp = Join-Path $env:RUNNER_TEMP 'vcc-edb-companions'
 New-Item -ItemType Directory -Force -Path $temp | Out-Null
-$archive = Join-Path $temp 'CoCo3_EDB.rar'
+$archive = Join-Path $temp 'VCC-EDB-2.1.9.33-Release.zip'
 $extracted = Join-Path $temp 'extracted'
 New-Item -ItemType Directory -Force -Path $extracted | Out-Null
 Invoke-WebRequest -Uri $archiveUrl -OutFile $archive -MaximumRedirection 10
