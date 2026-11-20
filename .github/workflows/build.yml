@@ -44,6 +44,14 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: cmd.exe /c BuildAll.bat
 
+    - name: Upload standalone Vcc.exe
+      uses: actions/upload-artifact@v4
+      with:
+        name: VCC-EDB-standalone-exe-${{ github.ref_type == 'tag' && github.ref_name || 'development' }}
+        path: __bin/Win32/Release/vcc.exe
+        if-no-files-found: error
+        retention-days: 14
+
     - name: Package and verify EDB ROMs and keyboard mapping
       shell: pwsh
       run: ./scripts/PackageEdBCompanions.ps1
