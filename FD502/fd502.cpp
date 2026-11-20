@@ -238,6 +238,13 @@ extern "C"
 			++gAutoSequenceGeneration;
 			return;
 		}
+		// One outstanding request: completion status must be unambiguous.
+		if (!gAutoSequenceRequests.empty())
+		{
+			gAutoSequenceStatus = 6;
+			++gAutoSequenceGeneration;
+			return;
+		}
 		gAutoSequenceRequests.push_back({ value, address });
 		gAutoSequenceStatus = 1;
 	}
@@ -887,7 +894,7 @@ static void RegisterAutoSequenceWatch()
 	{
 		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
 		address = gAutoSequenceAddress;
-		enabled = !gAutoSequencePlaylist.empty();
+		enabled = true; // Detect protocol with an empty playlist.
 	}
 	SetCpuMemoryWriteWatch(gSlotId, address, enabled);
 }
@@ -1005,7 +1012,7 @@ static void ProcessPendingAutoSequence()
 	{
 		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
 		gAutoSequenceCurrentEntry = target;
-		gAutoSequenceStatus = gAutoSequenceRequests.empty() ? 2 : 1;
+		gAutoSequenceStatus = 2;
 		++gAutoSequenceGeneration;
 		SaveAutoSequenceConfigLocked();
 	}
