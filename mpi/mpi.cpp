@@ -140,6 +140,11 @@ extern "C"
 		gMultiPakInterface.cpu_memory_write(value, memory_address);
 	}
 
+	__declspec(dllexport) bool PakCpuMemoryRead(unsigned short memory_address, unsigned char* value)
+	{
+		return gMultiPakInterface.cpu_memory_read(memory_address, value);
+	}
+
 	// Return MPI status.
 	__declspec(dllexport) void PakGetStatus(char* text_buffer, size_t buffer_size)
 	{
