@@ -86,8 +86,8 @@ static void PakSetCpuMemoryWriteWatch(slot_id_type SlotId, unsigned short addres
 static bool IsPakAutoRegisterAddress(unsigned short base, unsigned short address)
 {
 	// Preserve the original two-byte command/readback ABI.
-	return base < 0xFFFF &&
-		(address == base || address == static_cast<unsigned short>(base + 1));
+	return base <= 0xFFF8 &&
+		(address == base || address == base + 1 || address == base + 2);
 }
 
 bool PakCpuMemoryWriteIsWatched(unsigned short address)
@@ -105,8 +105,8 @@ bool PakCpuMemoryWriteIsWatched(unsigned short address)
 
 bool PakCpuMemoryReadIsWatched(unsigned short address)
 {
-	return gCpuMemoryReadWatchAddress.load(std::memory_order_acquire) ==
-		static_cast<unsigned int>(address);
+	const unsigned int legacy = gCpuMemoryReadWatchAddress.load(std::memory_order_acquire);
+	return legacy != 0x10000 && address >= legacy && address <= legacy + 6;
 }
 
 void PakCpuMemoryWrite(unsigned char value, unsigned short address)
