@@ -126,6 +126,7 @@ static constexpr size_t AUTO_SEQUENCE_MAX_PENDING_REQUESTS = 16;
 static constexpr unsigned char AUTO_SEQUENCE_STAGING_DRIVE = 5;
 static bool gAutoSequenceWrap = true;
 static int gAutoSequenceCurrentEntry = -1;
+static bool gAutoSequenceInFlight = false;
 static bool gAutoSequenceExtended = false; // Opt-in via write 0xED to base+2
 static unsigned char gAutoSequenceStatus = 0; // 0 idle, 1 pending, 2 success, 3 invalid, 4 mount error, 5 unavailable, 6 overflow
 static unsigned char gAutoSequenceLastRequested = 0;
@@ -223,6 +224,11 @@ extern "C"
 		}
 		if (address != gAutoSequenceAddress &&
 			address != static_cast<unsigned short>(gAutoSequenceAddress + 1)) return;
+		if (gAutoSequenceExtended && (gAutoSequenceInFlight || !gAutoSequenceRequests.empty()))
+		{
+			// Do not replace the pending transaction status with a rejected request.
+			return;
+		}
 		gAutoSequenceLastRequested = value;
 		if (gAutoSequencePlaylist.empty())
 		{
@@ -238,8 +244,8 @@ extern "C"
 			++gAutoSequenceGeneration;
 			return;
 		}
-		// One outstanding request: completion status must be unambiguous.
-		if (!gAutoSequenceRequests.empty())
+		// Single-flight only in extended mode; preserve legacy FIFO semantics.
+		if (gAutoSequenceExtended && (gAutoSequenceInFlight || !gAutoSequenceRequests.empty()))
 		{
 			gAutoSequenceStatus = 6;
 			++gAutoSequenceGeneration;
@@ -826,6 +832,7 @@ static void LoadAutoSequenceConfig()
 	gAutoSequencePlaylist.clear();
 	gAutoSequenceRequests.clear();
 	gAutoSequenceExtended = false;
+	gAutoSequenceInFlight = false;
 	gAutoSequenceStatus = 0;
 	gAutoSequenceLastRequested = 0;
 	gAutoSequenceGeneration = 0;
@@ -947,6 +954,7 @@ static void ProcessPendingAutoSequence()
 
 		request = gAutoSequenceRequests.front();
 		gAutoSequenceRequests.pop_front();
+		gAutoSequenceInFlight = true;
 
 		const int current_entry = gAutoSequenceCurrentEntry;
 		const int playlist_size = static_cast<int>(gAutoSequencePlaylist.size());
@@ -980,6 +988,7 @@ static void ProcessPendingAutoSequence()
 		if (target < 0 || target >= playlist_size)
 		{
 			gAutoSequenceStatus = 3;
+			gAutoSequenceInFlight = false;
 			++gAutoSequenceGeneration;
 			return;
 		}
@@ -993,6 +1002,7 @@ static void ProcessPendingAutoSequence()
 	{
 		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
 		gAutoSequenceRequests.push_front(request);
+		gAutoSequenceInFlight = false;
 		return;
 	}
 
@@ -1005,6 +1015,7 @@ static void ProcessPendingAutoSequence()
 		DLOG_C("AutoSequence: could not mount playlist entry %d: %s\n", target + 1, target_path.c_str());
 		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
 		gAutoSequenceStatus = 4;
+		gAutoSequenceInFlight = false;
 		++gAutoSequenceGeneration;
 		return;
 	}
@@ -1013,6 +1024,7 @@ static void ProcessPendingAutoSequence()
 		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
 		gAutoSequenceCurrentEntry = target;
 		gAutoSequenceStatus = 2;
+		gAutoSequenceInFlight = false;
 		++gAutoSequenceGeneration;
 		SaveAutoSequenceConfigLocked();
 	}
@@ -1215,6 +1227,7 @@ static void OpenAutoSequenceDialog(HWND owner)
 		}
 
 		gAutoSequenceRequests.clear();
+		gAutoSequenceInFlight = false;
 		gAutoSequenceExtended = false;
 		gAutoSequenceStatus = 0;
 		gAutoSequenceLastRequested = 0;
