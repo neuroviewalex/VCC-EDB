@@ -4,13 +4,9 @@ The distinction is that **VCC-EDB is intended to be a portable, EDB-configured d
 
 **Portable EDB ROM selection.** VCC resolves `coco3_201_edb.rom` and `disk_211_edb.rom` relative to the executable's directory, rather than relying on paths from the machine where the package was built.
 
-To explain *all* additions relative to the original official 2.1.9.3, I also need to distinguish earlier EDB-specific changes from functionality that already existed upstream.
-
 ## **Complete documented feature overview**
 
 ### **1. Programmable disk-image playlist system**
-
-This is arguably the most significant emulator-level addition.
 
 - Supports up to **255 numbered DSK images**.
 - A CoCo program can request a disk change by writing to address `&H7F00`.
@@ -23,8 +19,6 @@ This is arguably the most significant emulator-level addition.
 This provides a mechanism for multi-disk software, automated demonstrations, and EDB programs to control disk changes from inside the emulated machine.
 
 ### **2. Floppy controller reliability improvements**
-
-VCC-EDB documents two related fixes:
 
 **FD-502 lifecycle and reset handling:** Corrects controller initialization and reset behavior, particularly when the emulator starts or resets.
 
