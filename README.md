@@ -127,7 +127,7 @@ With a new extended storage solution:
 Programmable disk-image playlist system...
 
     Up to 255 numbered DSK images
-    Select disk using POKE &H7F00,N
+    Select disk using CD (by volume name) or SEQ (by index #)
 
 Additional safeguards:
 
