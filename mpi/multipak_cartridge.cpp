@@ -144,7 +144,7 @@ void multipak_cartridge::cpu_memory_write(unsigned char value, unsigned short ad
 		if (!cpu_write_watch_enabled_[slot].load(std::memory_order_acquire))
 			continue;
 		const auto base = static_cast<unsigned short>(cpu_write_watch_address_[slot].load(std::memory_order_relaxed));
-		if (address == base || (base < 0xFFFF && address == static_cast<unsigned short>(base + 1)))
+		if (address >= base && address - base <= 2)
 			slots_[slot].cpu_memory_write(value, address);
 	}
 }
@@ -159,7 +159,7 @@ bool multipak_cartridge::cpu_memory_read(unsigned short address, unsigned char* 
 		if (!cpu_write_watch_enabled_[slot].load(std::memory_order_acquire))
 			continue;
 		const auto base = static_cast<unsigned short>(cpu_write_watch_address_[slot].load(std::memory_order_relaxed));
-		if (base < 0xFFFF && address == static_cast<unsigned short>(base + 1) &&
+		if (address > base && address - base <= 7 &&
 			slots_[slot].cpu_memory_read(address, value))
 			return true;
 	}
