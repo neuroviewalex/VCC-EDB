@@ -1,3 +1,147 @@
+## **VCC-EDB versus official VCC 2.1.9.3**
+
+The distinction is that **VCC-EDB is intended to be a portable, EDB-configured distribution of VCC**, rather than a fundamentally different CoCo 3 emulator.
+
+The most recent work adds three important capabilities:
+
+1. **Portable EDB ROM selection.** VCC resolves `coco3_201_edb.rom` and `disk_211_edb.rom` relative to the executable's directory, rather than relying on paths from the machine where the package was built.
+2. **Automatic version synchronization.** The build system updates the window title, About dialog, Windows executable version metadata, and internal release string from the version being built.
+3. **Complete release packaging.** GitHub Actions verifies and includes the EDB ROMs and `custom.keymap` alongside the compiled executable.
+
+Those are verified source/build changes. To explain *all* additions relative to the original official 2.1.9.3, I also need to distinguish earlier EDB-specific changes from functionality that already existed upstream.
+
+## **Complete documented feature overview**
+
+Based on the repository's current README and source, these are the principal VCC-EDB additions and modifications relative to the official VCC 2.1.9.3 baseline.
+
+### **1. Programmable disk-image playlist system**
+
+This is arguably the most significant emulator-level addition.
+
+- Supports up to **255 numbered DSK images**.
+- A CoCo program can request a disk change by writing to address `&H7F00`.
+- For example, `POKE &H7F00,5` selects disk image number 5.
+- Repeated writes of the same value are recognized as separate commands.
+- Disk changes are queued until the floppy controller becomes idle.
+- Switching disks does not reset the emulated CoCo.
+- An active disk operation is not intentionally interrupted.
+
+This provides a mechanism for multi-disk software, automated demonstrations, and EDB programs to control disk changes from inside the emulated machine.
+
+### **2. Floppy controller reliability improvements**
+
+VCC-EDB documents two related fixes:
+
+**FD-502 lifecycle and reset handling:** Corrects controller initialization and reset behavior, particularly when the emulator starts or resets.
+
+**WD1793 transfer handling:** Improves reset handling when floppy transfers are in progress.
+
+These changes are especially relevant to software performing continuous or automated disk operations.
+
+### **3. Multi-Pak Interface and cartridge reliability**
+
+VCC-EDB includes changes to:
+
+- Refresh MPI cartridge-window handles after cartridge changes.
+- Correct cartridge DLL initialization and cleanup.
+- Improve hard-disk and SDC plugin lifecycle management.
+
+The purpose is to make cartridge changes, resets, and plugin loading more reliable.
+
+### **4. EDB ROM integration and automatic boot**
+
+VCC-EDB distributes two customized ROMs:
+
+| ROM                 | Function                                             |
+| ------------------- | ---------------------------------------------------- |
+| `coco3_201_edb.rom` | Extended Color BASIC 2.01 with EDB boot support      |
+| `disk_211_edb.rom`  | Disk Extended Color BASIC 2.11 with EDB boot support |
+
+The customized ROMs provide cleaner boot presentation and conditional startup behavior.
+
+Without a disk controller, the CoCo ROM follows its normal Extended BASIC boot path. With a disk controller, it can hand off to the customized disk ROM.
+
+The disk ROM supports conventional Disk BASIC startup and an EDB-oriented boot path when suitable boot media is present.
+
+**Important distinction:** These are changes to the supplied ROM firmware, not necessarily new capabilities implemented in the VCC emulator core.
+
+### **5. Portable configuration and ROM paths**
+
+VCC-EDB now uses the directory containing `Vcc.exe` as the reference point for its portable configuration.
+
+This includes:
+
+- Application-local `Vcc.ini`.
+- Automatic selection of the two EDB ROMs.
+- ROM paths reconstructed from the executable directory at startup.
+- Reduced dependence on absolute paths from a previous Windows installation.
+
+The release directory can therefore be moved without manually correcting the ROM paths.
+
+### **6. Custom keyboard layout portability**
+
+VCC-EDB adds startup handling for its custom keyboard mapping.
+
+- New configurations default to the Custom layout.
+- `custom.keymap` is loaded from the executable directory.
+- Application-local keymap paths can be stored relatively.
+- If the custom keymap cannot be loaded, VCC falls back to a built-in layout for that session.
+
+This is particularly useful when distributing a preconfigured EDB environment across computers.
+
+### **7. Startup initialization improvements**
+
+The initial hard reset is deliberately performed after the MPI and cartridge components have been loaded.
+
+This matters because the CoCo ROM and disk-controller ROM must be active before the first emulated instruction executes.
+
+The change addresses startup-order problems that could otherwise leave the emulator using the wrong ROM or an incompletely initialized disk controller.
+
+### **8. Automatic application versioning**
+
+Beginning with the latest development changes, the build system synchronizes:
+
+- Window title.
+- About dialog.
+- Windows File Version.
+- Windows Product Version.
+- Internal release string.
+
+A build triggered by a GitHub version tag uses that tag's version number. Other builds use the version recorded in `VERSION.txt`.
+
+### **9. Automated portable release packaging**
+
+GitHub Actions now compiles the Windows executable and prepares its companion files.
+
+The packaging process verifies the SHA-256 checksum of the established EDB archive and requires the two ROMs and `custom.keymap` before uploading a build artifact.
+
+This prevents the build pipeline from silently producing an incomplete EDB package.
+
+## **What remains standard VCC functionality?**
+
+The repository also documents the following emulator capabilities, but these should **not** be advertised as exclusive VCC-EDB inventions:
+
+| Capability                             | Classification |
+| -------------------------------------- | -------------- |
+| Motorola 6809 / Hitachi 6309 emulation | Existing VCC   |
+| CoCo 3 memory expansion up to 8 MB     | Existing VCC   |
+| Four-slot MPI                          | Existing VCC   |
+| FD-502 and four virtual drives         | Existing VCC   |
+| Becker Port / DriveWire connectivity   | Existing VCC   |
+| Virtual hard disks and SuperIDE        | Existing VCC   |
+| Orchestra90cc                          | Existing VCC   |
+| CoCo SDC simulation                    | Existing VCC   |
+
+## **Overall assessment**
+
+The most distinctive VCC-EDB capabilities are **software-controlled disk-image switching, EDB-aware ROM booting, improved controller initialization, and a portable, preconfigured environment**.
+
+The recent build and packaging changes make those capabilities easier to distribute reliably, rather than changing the emulation engine itself.
+
+One qualification: the official `v2.1.9.3` Git reference was not available for a direct commit-by-commit comparison in the VCC-EDB repository. This is therefore a comprehensive account of the **documented EDB modifications**, not a proven exhaustive source diff against upstream.
+
+For a definitive historical comparison, the next step would be to compare the VCC-EDB source tree directly against the official `VCCE/VCC` 2.1.9.3 source release, including every modified C++ file and plugin.
+
 ## VCC - Virtual Color Computer
 VCC is an emulator for the Tandy Color Computer 3, designed to run on Microsoft Windows. It aims to provide an accurate and easy-to-use emulation of the original hardware, as purchased from a Radio Shack store or Tandy Computer Center between 1986-1992.  For VCC usage, see the User Guide at [VCC Wiki](https://github.com/VCCE/VCC/wiki). The wiki also contains release notes and additional documents. Online documentation may reflect some features not available in earlier versions or that are pre-release.
 
