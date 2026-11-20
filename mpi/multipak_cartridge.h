@@ -100,6 +100,7 @@ private:
 	std::array<VCC::Core::cartridge_slot, NUMSLOTS> slots_;
 	std::array<std::atomic<unsigned int>, NUMSLOTS> cpu_write_watch_address_{};
 	std::array<std::atomic<bool>, NUMSLOTS> cpu_write_watch_enabled_{};
+	std::array<std::atomic<bool>, NUMSLOTS> cpu_readback_enabled_{};
 	unsigned char slot_register_ = default_slot_register_value;
 	slot_id_type switch_slot_ = default_switch_slot_value;
 	slot_id_type cached_cts_slot_ = default_switch_slot_value;

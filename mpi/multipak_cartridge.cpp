@@ -110,6 +110,9 @@ void multipak_cartridge::reset()
 	switch_slot_ = cached_cts_slot_ = cached_scs_slot_ = mpi_slot;
 	slot_register_ = 0b11001100 | mpi_slot | (mpi_slot << 4);
 
+	for (auto& gate : cpu_readback_enabled_)
+		gate.store(false, std::memory_order_release);
+
 	for (const auto& cartridge_slot : slots_)
 	{
 		cartridge_slot.reset();
@@ -130,6 +133,7 @@ void multipak_cartridge::set_cpu_memory_write_watch(slot_id_type mpi_slot, unsig
 {
 	if (mpi_slot >= NUMSLOTS) return;
 
+	cpu_readback_enabled_[mpi_slot].store(false, std::memory_order_release);
 	cpu_write_watch_address_[mpi_slot].store(address, std::memory_order_relaxed);
 	cpu_write_watch_enabled_[mpi_slot].store(enabled, std::memory_order_release);
 	callbacks_->set_cpu_memory_write_watch(mpi_slot + 1, address, enabled);
@@ -145,18 +149,39 @@ void multipak_cartridge::cpu_memory_write(unsigned char value, unsigned short ad
 			continue;
 		const auto base = static_cast<unsigned short>(cpu_write_watch_address_[slot].load(std::memory_order_relaxed));
 		if (address >= base && address - base <= 2)
+		{
 			slots_[slot].cpu_memory_write(value, address);
+			if (address - base == 2)
+			{
+				if (value == 0xED)
+					cpu_readback_enabled_[slot].store(true, std::memory_order_release);
+				else if (value == 0)
+					cpu_readback_enabled_[slot].store(false, std::memory_order_release);
+			}
+		}
 	}
 }
 
 bool multipak_cartridge::cpu_memory_read(unsigned short address, unsigned char* value)
 {
 	if (!value) return false;
+	// No pre-activation read may lock MPI or replace ordinary RAM.
+	bool active = false;
+	for (const auto& gate : cpu_readback_enabled_)
+	{
+		if (gate.load(std::memory_order_acquire))
+		{
+			active = true;
+			break;
+		}
+	}
+	if (!active) return false;
 	VCC::Util::section_locker lock(mutex_);
 
 	for (slot_id_type slot = 0; slot < NUMSLOTS; ++slot)
 	{
-		if (!cpu_write_watch_enabled_[slot].load(std::memory_order_acquire))
+		if (!cpu_write_watch_enabled_[slot].load(std::memory_order_acquire) ||
+			!cpu_readback_enabled_[slot].load(std::memory_order_acquire))
 			continue;
 		const auto base = static_cast<unsigned short>(cpu_write_watch_address_[slot].load(std::memory_order_relaxed));
 		if (address > base && address - base <= 7 &&
@@ -371,6 +396,7 @@ void multipak_cartridge::eject_cartridge(slot_id_type mpi_slot)
 
 	VCC::Util::section_locker lock(mutex_);
 	slots_[mpi_slot].stop();
+	cpu_readback_enabled_[mpi_slot].store(false, std::memory_order_release);
 	slots_[mpi_slot] = {};
 	if (mpi_slot == cached_cts_slot_ || mpi_slot == switch_slot_)
 		SendMessage(gVccWnd,WM_VCC_CPU_RESET,(WPARAM) 0,(LPARAM) 0);
