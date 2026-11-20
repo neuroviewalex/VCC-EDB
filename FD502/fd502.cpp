@@ -126,6 +126,10 @@ static constexpr size_t AUTO_SEQUENCE_MAX_PENDING_REQUESTS = 16;
 static constexpr unsigned char AUTO_SEQUENCE_STAGING_DRIVE = 5;
 static bool gAutoSequenceWrap = true;
 static int gAutoSequenceCurrentEntry = -1;
+static bool gAutoSequenceExtended = false; // Opt-in via write 0xED to base+2
+static unsigned char gAutoSequenceStatus = 0; // 0 idle, 1 pending, 2 success, 3 invalid, 4 mount error, 5 unavailable, 6 overflow
+static unsigned char gAutoSequenceLastRequested = 0;
+static unsigned char gAutoSequenceGeneration = 0;
 static const char* const AUTO_SEQUENCE_SECTION = "FD-502 AutoSequence";
 
 struct AutoSequenceDialogState
@@ -211,32 +215,61 @@ extern "C"
 	__declspec(dllexport) void PakCpuMemoryWrite(unsigned char value, unsigned short address)
 	{
 		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
-		if (gAutoSequencePlaylist.empty() ||
-			(address != gAutoSequenceAddress &&
-			 address != static_cast<unsigned short>(gAutoSequenceAddress + 1)))
+		if (address == static_cast<unsigned short>(gAutoSequenceAddress + 2))
+		{
+			if (value == 0xED) gAutoSequenceExtended = true;
+			else if (value == 0) gAutoSequenceExtended = false;
 			return;
+		}
+		if (address != gAutoSequenceAddress &&
+			address != static_cast<unsigned short>(gAutoSequenceAddress + 1)) return;
+		gAutoSequenceLastRequested = value;
+		if (gAutoSequencePlaylist.empty())
+		{
+			gAutoSequenceStatus = 5;
+			++gAutoSequenceGeneration;
+			return;
+		}
 
 		if (gAutoSequenceRequests.size() >= AUTO_SEQUENCE_MAX_PENDING_REQUESTS)
 		{
 			DLOG_C("AutoSequence: command queue full; dropping command\\n");
+			gAutoSequenceStatus = 6;
+			++gAutoSequenceGeneration;
 			return;
 		}
 		gAutoSequenceRequests.push_back({ value, address });
+		gAutoSequenceStatus = 1;
 	}
 
 
-	// The byte after the command register is a read-only current-entry value.
-	// It reports the one-based POKE selector, or zero when no playlist item is active.
+	// Extended reads are invisible until an explicit activation write.
 	__declspec(dllexport) bool PakCpuMemoryRead(unsigned short address, unsigned char* value)
 	{
 		if (!value) return false;
 		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
-		if (gAutoSequencePlaylist.empty() || gAutoSequenceAddress >= 0xFFFF ||
-			address != static_cast<unsigned short>(gAutoSequenceAddress + 1))
-			return false;
-		*value = (gAutoSequenceCurrentEntry >= 0 &&
-			gAutoSequenceCurrentEntry < static_cast<int>(gAutoSequencePlaylist.size()))
-			? static_cast<unsigned char>(gAutoSequenceCurrentEntry + 1) : 0;
+		if (address == static_cast<unsigned short>(gAutoSequenceAddress + 1) && !gAutoSequencePlaylist.empty())
+		{
+			*value = (gAutoSequenceCurrentEntry >= 0 &&
+				gAutoSequenceCurrentEntry < static_cast<int>(gAutoSequencePlaylist.size()) &&
+				gVirtualDrive[3].FileHandle != nullptr &&
+				_stricmp(gVirtualDrive[3].ImageName,
+					gAutoSequencePlaylist[static_cast<size_t>(gAutoSequenceCurrentEntry)].c_str()) == 0)
+				? static_cast<unsigned char>(gAutoSequenceCurrentEntry + 1) : 0;
+			return true;
+		}
+		if (!gAutoSequenceExtended || gAutoSequenceAddress > 0xFFF8 ||
+			address < gAutoSequenceAddress + 2 || address > gAutoSequenceAddress + 7) return false;
+		switch (address - gAutoSequenceAddress)
+		{
+		case 2: *value = static_cast<unsigned char>(gAutoSequencePlaylist.size()); break;
+		case 3: *value = gAutoSequenceStatus; break;
+		case 4: *value = gAutoSequenceLastRequested; break;
+		case 5: *value = 0xED; break;
+		case 6: *value = 1; break;
+		case 7: *value = gAutoSequenceGeneration; break;
+		default: return false;
+		}
 		return true;
 	}
 
@@ -785,10 +818,14 @@ static void LoadAutoSequenceConfig()
 	std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
 	gAutoSequencePlaylist.clear();
 	gAutoSequenceRequests.clear();
+	gAutoSequenceExtended = false;
+	gAutoSequenceStatus = 0;
+	gAutoSequenceLastRequested = 0;
+	gAutoSequenceGeneration = 0;
 
 	int address = Setting().read(AUTO_SEQUENCE_SECTION, "MemoryAddress", 0x7F00);
 	// The command and status/readback bytes must not wrap past the address space.
-	if (address < 0 || address > 0xFFFE) address = 0x7F00;
+	if (address < 0 || address > 0xFFF8) address = 0x7F00;
 	gAutoSequenceAddress = static_cast<unsigned short>(address);
 	gAutoSequenceWrap = Setting().read(AUTO_SEQUENCE_SECTION, "Wrap", 1) != 0;
 
@@ -934,7 +971,11 @@ static void ProcessPendingAutoSequence()
 		}
 
 		if (target < 0 || target >= playlist_size)
+		{
+			gAutoSequenceStatus = 3;
+			++gAutoSequenceGeneration;
 			return;
+		}
 
 		target_path = gAutoSequencePlaylist[static_cast<size_t>(target)];
 	}
@@ -955,12 +996,17 @@ static void ProcessPendingAutoSequence()
 	if (!already_mounted && !ReplaceDrive3Image(target_path))
 	{
 		DLOG_C("AutoSequence: could not mount playlist entry %d: %s\n", target + 1, target_path.c_str());
+		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
+		gAutoSequenceStatus = 4;
+		++gAutoSequenceGeneration;
 		return;
 	}
 
 	{
 		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
 		gAutoSequenceCurrentEntry = target;
+		gAutoSequenceStatus = gAutoSequenceRequests.empty() ? 2 : 1;
+		++gAutoSequenceGeneration;
 		SaveAutoSequenceConfigLocked();
 	}
 
@@ -1084,9 +1130,9 @@ static INT_PTR CALLBACK AutoSequenceDialogProc(HWND hDlg, UINT message, WPARAM w
 				char* end = nullptr;
 				const unsigned long parsed = strtoul(number_text, &end, 16);
 				while (end && *end && isspace(static_cast<unsigned char>(*end))) ++end;
-				if (number_text[0] == '\0' || end == number_text || (end && *end) || parsed > 0xFDFC)
+				if (number_text[0] == '\0' || end == number_text || (end && *end) || parsed > 0xFFF8)
 				{
-					MessageBox(hDlg, "Enter a hexadecimal address from 0000 to FFFE; the next byte is reserved for AutoSequence status.", "AutoSequence", MB_OK | MB_ICONWARNING);
+					MessageBox(hDlg, "Enter a hexadecimal base address from 0000 to FFF8 (8-byte register block).", "AutoSequence", MB_OK | MB_ICONWARNING);
 					return TRUE;
 				}
 				state->address = static_cast<unsigned short>(parsed);
@@ -1162,6 +1208,10 @@ static void OpenAutoSequenceDialog(HWND owner)
 		}
 
 		gAutoSequenceRequests.clear();
+		gAutoSequenceExtended = false;
+		gAutoSequenceStatus = 0;
+		gAutoSequenceLastRequested = 0;
+		++gAutoSequenceGeneration;
 		SaveAutoSequenceConfigLocked();
 		if (FloppyPath[0])
 			Setting().write(MS_PATHS, "FloppyPath", FloppyPath);
