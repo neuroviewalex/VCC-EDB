@@ -218,7 +218,12 @@ extern "C"
 		std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
 		if (address == static_cast<unsigned short>(gAutoSequenceAddress + 2))
 		{
-			if (value == 0xED) gAutoSequenceExtended = true;
+			if (value == 0xED)
+			{
+				gAutoSequenceExtended = true;
+				if (gAutoSequenceInFlight || !gAutoSequenceRequests.empty())
+					gAutoSequenceStatus = 1;
+			}
 			else if (value == 0) gAutoSequenceExtended = false;
 			return;
 		}
@@ -226,7 +231,7 @@ extern "C"
 			address != static_cast<unsigned short>(gAutoSequenceAddress + 1)) return;
 		if (gAutoSequenceExtended && (gAutoSequenceInFlight || !gAutoSequenceRequests.empty()))
 		{
-			// Do not replace the pending transaction status with a rejected request.
+			// A busy protocol request cannot supersede the active transaction.
 			return;
 		}
 		gAutoSequenceLastRequested = value;
@@ -296,6 +301,8 @@ extern "C"
 		{
 			std::lock_guard<std::mutex> lock(gAutoSequenceMutex);
 			gAutoSequenceRequests.clear();
+			gAutoSequenceInFlight = false;
+			gAutoSequenceExtended = false;
 			}
 		gPakInitialized = false;
 #ifdef COMBINE_BECKER
