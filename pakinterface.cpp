@@ -56,7 +56,7 @@ static std::atomic<unsigned int> gCpuWriteWatchAddress[5]{};
 static std::atomic<bool> gCpuWriteWatchEnabled[5]{};
 // One exact-address fast path keeps ordinary CPU memory reads cheap when no
 // cartridge has an active readback register.
-static std::atomic<unsigned int> gCpuMemoryReadWatchAddress{0x10000};
+static std::atomic<unsigned int> gCpuMemoryReadWatchBase{0x10000};
 
 static void RefreshCpuMemoryReadWatchAddress()
 {
@@ -72,7 +72,7 @@ static void RefreshCpuMemoryReadWatchAddress()
 			break;
 		}
 	}
-	gCpuMemoryReadWatchAddress.store(read_address, std::memory_order_release);
+	gCpuMemoryReadWatchBase.store(read_address == 0x10000 ? read_address : read_address - 1, std::memory_order_release);
 }
 
 static void PakSetCpuMemoryWriteWatch(slot_id_type SlotId, unsigned short address, bool enabled)
@@ -105,8 +105,9 @@ bool PakCpuMemoryWriteIsWatched(unsigned short address)
 
 bool PakCpuMemoryReadIsWatched(unsigned short address)
 {
-	return gCpuMemoryReadWatchAddress.load(std::memory_order_acquire) ==
-		static_cast<unsigned int>(address);
+	const unsigned int base = gCpuMemoryReadWatchBase.load(std::memory_order_acquire);
+	return base <= 0xFFF8 && address > base &&
+		static_cast<unsigned int>(address) <= base + 7;
 }
 
 void PakCpuMemoryWrite(unsigned char value, unsigned short address)
