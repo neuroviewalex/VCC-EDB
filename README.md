@@ -2,17 +2,11 @@
 
 The distinction is that **VCC-EDB is intended to be a portable, EDB-configured distribution of VCC**, rather than a fundamentally different CoCo 3 emulator.
 
-The most recent work adds three important capabilities:
+**Portable EDB ROM selection.** VCC resolves `coco3_201_edb.rom` and `disk_211_edb.rom` relative to the executable's directory, rather than relying on paths from the machine where the package was built.
 
-1. **Portable EDB ROM selection.** VCC resolves `coco3_201_edb.rom` and `disk_211_edb.rom` relative to the executable's directory, rather than relying on paths from the machine where the package was built.
-2. **Automatic version synchronization.** The build system updates the window title, About dialog, Windows executable version metadata, and internal release string from the version being built.
-3. **Complete release packaging.** GitHub Actions verifies and includes the EDB ROMs and `custom.keymap` alongside the compiled executable.
-
-Those are verified source/build changes. To explain *all* additions relative to the original official 2.1.9.3, I also need to distinguish earlier EDB-specific changes from functionality that already existed upstream.
+To explain *all* additions relative to the original official 2.1.9.3, I also need to distinguish earlier EDB-specific changes from functionality that already existed upstream.
 
 ## **Complete documented feature overview**
-
-Based on the repository's current README and source, these are the principal VCC-EDB additions and modifications relative to the official VCC 2.1.9.3 baseline.
 
 ### **1. Programmable disk-image playlist system**
 
@@ -97,26 +91,6 @@ This matters because the CoCo ROM and disk-controller ROM must be active before 
 
 The change addresses startup-order problems that could otherwise leave the emulator using the wrong ROM or an incompletely initialized disk controller.
 
-### **8. Automatic application versioning**
-
-Beginning with the latest development changes, the build system synchronizes:
-
-- Window title.
-- About dialog.
-- Windows File Version.
-- Windows Product Version.
-- Internal release string.
-
-A build triggered by a GitHub version tag uses that tag's version number. Other builds use the version recorded in `VERSION.txt`.
-
-### **9. Automated portable release packaging**
-
-GitHub Actions now compiles the Windows executable and prepares its companion files.
-
-The packaging process verifies the SHA-256 checksum of the established EDB archive and requires the two ROMs and `custom.keymap` before uploading a build artifact.
-
-This prevents the build pipeline from silently producing an incomplete EDB package.
-
 ## **What remains standard VCC functionality?**
 
 The repository also documents the following emulator capabilities, but these should **not** be advertised as exclusive VCC-EDB inventions:
@@ -135,12 +109,6 @@ The repository also documents the following emulator capabilities, but these sho
 ## **Overall assessment**
 
 The most distinctive VCC-EDB capabilities are **software-controlled disk-image switching, EDB-aware ROM booting, improved controller initialization, and a portable, preconfigured environment**.
-
-The recent build and packaging changes make those capabilities easier to distribute reliably, rather than changing the emulation engine itself.
-
-One qualification: the official `v2.1.9.3` Git reference was not available for a direct commit-by-commit comparison in the VCC-EDB repository. This is therefore a comprehensive account of the **documented EDB modifications**, not a proven exhaustive source diff against upstream.
-
-For a definitive historical comparison, the next step would be to compare the VCC-EDB source tree directly against the official `VCCE/VCC` 2.1.9.3 source release, including every modified C++ file and plugin.
 
 ## VCC - Virtual Color Computer
 VCC is an emulator for the Tandy Color Computer 3, designed to run on Microsoft Windows. It aims to provide an accurate and easy-to-use emulation of the original hardware, as purchased from a Radio Shack store or Tandy Computer Center between 1986-1992.  For VCC usage, see the User Guide at [VCC Wiki](https://github.com/VCCE/VCC/wiki). The wiki also contains release notes and additional documents. Online documentation may reflect some features not available in earlier versions or that are pre-release.
