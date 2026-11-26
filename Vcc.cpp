@@ -157,7 +157,13 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	unsigned threadID;
 	HANDLE hEvent,
 	OleInitialize(nullptr); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
-	LoadString(hInstance, IDS_APP_TITLE,g_szAppName, MAX_LOADSTRING);
+	// Keep the alternate/legacy window title architecture-aware as well.
+	LoadString(hInstance, IDS_APP_TITLE,g_szAppName, MAX_LOADSTRING - 4);
+#ifdef _WIN64
+	lstrcatA(g_szAppName, " x64");
+#else
+	lstrcatA(g_szAppName, " x32");
+#endif
 
 	// Parse command line
 	memset(&CmdArg,0,sizeof(CmdArg));
