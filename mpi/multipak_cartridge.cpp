@@ -84,8 +84,8 @@ void multipak_cartridge::start()
 		if (!path.empty())
 		{
 			if (mount_cartridge(mpi_slot, path) != VCC::Core::cartridge_loader_status::success) {
-				DLOG_C("Clearing configured slot path %d\n",mpi_slot);
-				configuration_.slot_cartridge_path(mpi_slot,"");
+				// A startup failure is not an intentional ejection. Preserve the saved assignment.
+				DLOG_C("Unable to mount configured slot %u; retaining path\n",mpi_slot);
 			}
 		}
 	}

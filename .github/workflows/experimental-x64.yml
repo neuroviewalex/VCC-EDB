@@ -72,7 +72,7 @@ jobs:
           import pathlib, struct
           root = pathlib.Path('__bin/x64/Release')
           files = [p for p in root.iterdir() if p.suffix.lower() in ('.exe','.dll')]
-          assert {'vcc.exe','mpi.dll','fd502.dll'} <= {p.name.lower() for p in files}, files
+          assert {'vcc.exe','mpi.dll','fd502.dll','harddisk.dll'} <= {p.name.lower() for p in files}, files
           for p in files:
               b = p.read_bytes()
               assert b[:2] == b'MZ', p
@@ -83,7 +83,7 @@ jobs:
       - name: Upload x64 binary candidate
         uses: actions/upload-artifact@v4
         with:
-          name: VCC-EDB-experimental-x64
+          name: VCC-EDB-MPI-persistence-x64
           path: |
             __bin/x64/Release/*.exe
             __bin/x64/Release/*.dll
@@ -98,5 +98,52 @@ jobs:
           path: |
             x64-build.log
             x64-build.binlog
+          if-no-files-found: warn
+          retention-days: 7
+
+  win32:
+    if: github.ref == 'refs/heads/experimental-x64' || github.head_ref == 'experimental-x64'
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
+      - name: Build original Win32 configuration
+        shell: pwsh
+        run: |
+          msbuild Vcc.sln /m /p:Configuration=Release /p:Platform=x86 /bl:win32-build.binlog /fl "/flp:logfile=win32-build.log;verbosity=normal"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify Win32 PE architecture and required modules
+        shell: python
+        run: |
+          import pathlib, struct
+          root = pathlib.Path('__bin/Win32/Release')
+          files = [p for p in root.iterdir() if p.suffix.lower() in ('.exe','.dll')]
+          assert {'vcc.exe','mpi.dll','fd502.dll','harddisk.dll'} <= {p.name.lower() for p in files}, files
+          for p in files:
+              b = p.read_bytes()
+              assert b[:2] == b'MZ', p
+              off = struct.unpack_from('<I',b,0x3c)[0]
+              assert b[off:off+4] == b'PE\x00\x00', p
+              assert struct.unpack_from('<H',b,off+4)[0] == 0x14c, p
+              print('I386:',p.name)
+      - name: Upload Win32 binary candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: VCC-EDB-MPI-persistence-Win32
+          path: |
+            __bin/Win32/Release/*.exe
+            __bin/Win32/Release/*.dll
+            __bin/Win32/Release/*.pdb
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload Win32 build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: VCC-EDB-MPI-persistence-Win32-diagnostics
+          path: |
+            win32-build.log
+            win32-build.binlog
           if-no-files-found: warn
           retention-days: 7
