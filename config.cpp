@@ -260,8 +260,7 @@ void InitialLoadConfig(SystemState *LCState)
 
 		Setting().write("MPI", "SWPOSITION", 3);
 		Setting().write("MPI", "SLOT4", "fd502.dll");
-		Setting().write("MPI", "SLOT3", "");
-		Setting().write("MPI", "SLOT1", "");
+		// Preserve user-selected MPI cartridges in slots 1 through 3.
 
 		Setting().write("FD-502 AutoSequence", "MemoryAddress", 32512);
 		Setting().write("FD-502 AutoSequence", "Wrap", 1);

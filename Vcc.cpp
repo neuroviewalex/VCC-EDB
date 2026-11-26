@@ -97,8 +97,8 @@ static char CpuName[20]="CPUNAME";
 
 /***Forward declarations of functions included in this code module*****/
 BOOL InitInstance (HINSTANCE, int);
-BOOL CALLBACK About(HWND, UINT, WPARAM, LPARAM);
-BOOL CALLBACK FunctionKeys(HWND, UINT, WPARAM, LPARAM);
+INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
+INT_PTR CALLBACK FunctionKeys(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM);
 
 void SoftReset();
@@ -353,11 +353,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					break;
 				case IDM_HELP_ABOUT:
 					DialogBox(EmuState.WindowInstance, (LPCTSTR)IDD_ABOUTBOX,
-						hWnd, (DLGPROC)About);
+						hWnd, About);
 				    break;
 				case IDM_HELP_FUNKEY:
 					DialogBox(EmuState.WindowInstance, (LPCTSTR)IDD_FUNCTION_KEYS,
-						hWnd, (DLGPROC)FunctionKeys);
+						hWnd, FunctionKeys);
 				    break;
 				case ID_AUDIO_CONFIG:
 					OpenAudioConfig();
@@ -888,7 +888,7 @@ void SoftReset()
 }
 
 // Message handler for the About box.
-BOOL CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
+INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 	switch (message)
 	{
@@ -908,7 +908,7 @@ BOOL CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 }
 
 // Message handler for function key help.
-BOOL CALLBACK FunctionKeys(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
+INT_PTR CALLBACK FunctionKeys(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*/)
 {
 	switch (message)
 	{

@@ -387,7 +387,7 @@ void CreateScrollBar(const RECT& Rect)
 			Rect.bottom - 42,  //height
 			hDlgMem,
 			(HMENU)IDC_MEM_VSCROLLBAR,
-			(HINSTANCE)GetWindowLong(hDlgMem, GWL_HINSTANCE),
+			(HINSTANCE)GetWindowLongPtr(hDlgMem, GWLP_HINSTANCE),
 			nullptr);
 
 		if (!hScrollBar) {
