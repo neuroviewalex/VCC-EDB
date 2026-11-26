@@ -103,7 +103,13 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	g_hInstance=hInstance;
 	g_nCmdShow=nCmdShow;
 	LoadLibraryExA("RICHED20.DLL", nullptr, 0x00000800 /* LOAD_LIBRARY_SEARCH_SYSTEM32 */);
-	LoadString(g_hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
+	// Reserve four characters for the build architecture suffix.
+	LoadString(g_hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING - 4);
+#ifdef _WIN64
+	lstrcat(szTitle, TEXT(" x64"));
+#else
+	lstrcat(szTitle, TEXT(" x32"));
+#endif
 	LoadString(g_hInstance, IDS_APP_TITLE, szWindowClass, MAX_LOADSTRING);
 	return TRUE;
 }
