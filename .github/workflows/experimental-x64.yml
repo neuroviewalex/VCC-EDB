@@ -40,6 +40,12 @@ jobs:
                               n.set(k,v.replace('Release|Win32','Release|x64'))
                           if n.tag == '{'+ns+'}Platform' and n.text == 'Win32':
                               n.text = 'x64'
+                          # Diagnostic x64 candidate only: keep warnings visible in the log.
+                          # Existing Win32 warning policy stays unchanged.
+                          if n.tag == '{'+ns+'}TreatWarningAsError':
+                              n.text = 'false'
+                          if n.tag == '{'+ns+'}EnableEnhancedInstructionSet' and n.text in ('StreamingSIMDExtensions', 'StreamingSIMDExtensions2'):
+                              n.text = 'NotSet'
                       parent.insert(list(parent).index(child)+1, clone)
                   else:
                       augment(child)
