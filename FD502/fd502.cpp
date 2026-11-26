@@ -50,6 +50,7 @@
 #include <vcc/bus/cartridge_menu.h>
 #include <vcc/bus/cartridge_messages.h>
 #include <vcc/util/fileutil.h>
+#include <vcc/util/textutil.h>
 
 //include becker code if COMBINE_BECKER is defined in fd502.h
 #ifdef COMBINE_BECKER
@@ -77,6 +78,14 @@ PakAssertInteruptHostCallback AssertInt = nullptr;
 unsigned char PhysicalDriveA=0,PhysicalDriveB=0,OldPhysicalDriveA=0,OldPhysicalDriveB=0;
 static unsigned char *RomPointer[3]={ExternalRom,DiskRom,RGBDiskRom};
 static unsigned char SelectRom=0;
+static constexpr char EdbDiskRomName[] = "disk_211_edb.rom";
+
+// Resolve from the host executable, not the FD-502 DLL or the working directory.
+static void SetEdbDiskRom()
+{
+	SelectRom = 0;
+	VCC::Util::copy_to_char(VCC::Util::QualifyModPath(EdbDiskRomName), RomFileName, MAX_PATH);
+}
 unsigned char SetChip(unsigned char);
 static unsigned char NewDiskNumber=0,CreateFlag=0;
 static unsigned char PersistDisks=0;
@@ -203,6 +212,7 @@ extern "C"
 	__declspec(dllexport) void PakReset()
 	{
 		ResetController();
+		SetEdbDiskRom();
 		LoadExtRom(External,RomFileName);
 	}
 
@@ -475,6 +485,10 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 			SendDlgItemMessage (hDlg, IDC_DISKA,CB_SETCURSEL,(WPARAM)PhysicalDriveA,(LPARAM)0);
 			SendDlgItemMessage (hDlg, IDC_DISKB,CB_SETCURSEL,(WPARAM)PhysicalDriveB,(LPARAM)0);
 			SendDlgItemMessage (hDlg,IDC_ROMPATH,WM_SETTEXT,0,(LPARAM)(LPCSTR)TempRomFileName);
+			SendDlgItemMessage(hDlg,IDC_ROMPATH,EM_SETREADONLY,TRUE,0);
+			EnableWindow(GetDlgItem(hDlg,IDC_BROWSE),FALSE);
+			for (auto id : ChipChoice)
+				EnableWindow(GetDlgItem(hDlg,id),FALSE);
 
 			SendDlgItemMessage (hDlg,IDC_BECKER_ENAB,BM_SETCHECK,BeckerEnabled,0);
 			SendDlgItemMessage (hDlg,IDC_BECKER_HOST,WM_SETTEXT,0,(LPARAM)(LPSTR)BeckerAddr);
@@ -514,10 +528,8 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 								mount_disk_image("*Floppy B:",PhysicalDriveB-1);
 						}
 					}
-					SelectRom=TempSelectRom;
-					strcpy(RomFileName,TempRomFileName );
-					CheckPath(RomFileName);
-					LoadExtRom(External,RomFileName); //JF
+					SetEdbDiskRom();
+					LoadExtRom(External,RomFileName);
 #ifdef COMBINE_BECKER
 					GetDlgItemText(hDlg,IDC_BECKER_HOST,BeckerAddr,MAX_PATH);
 					GetDlgItemText(hDlg,IDC_BECKER_PORT,BeckerPort,32);
@@ -533,32 +545,8 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lParam*
 				case IDC_EXTROM:
 				case IDC_TRSDOS:
 				case IDC_RGB:
-					for (temp=0;temp<sizeof(ChipChoice) / sizeof(*ChipChoice);temp++)
-						if (LOWORD(wParam)==ChipChoice[temp])
-						{
-							for (temp2=0;temp2<sizeof(ChipChoice) / sizeof(*ChipChoice);temp2++)
-								SendDlgItemMessage(hDlg,ChipChoice[temp2],BM_SETCHECK,0,0);
-							SendDlgItemMessage(hDlg,ChipChoice[temp],BM_SETCHECK,1,0);
-							TempSelectRom=temp;
-						}
-					break;
 				case IDC_BROWSE:
-					{
-						char dir[MAX_PATH];
-						strncpy(dir,TempRomFileName,MAX_PATH);
-						if (char * p = strrchr(dir,'\\')) *p = '\0';
-
-						FileDialog dlg;
-						dlg.setFilter("Disk Rom Images\0*.rom;\0All files\0*.*\0\0");
-						dlg.setTitle("Select Disk Rom Image");
-						dlg.setInitialDir(dir);
-						if (dlg.show(0,g_hConfDlg)) {
-							dlg.getpath(TempRomFileName,MAX_PATH);
-							SendDlgItemMessage
-								(hDlg,IDC_ROMPATH,WM_SETTEXT,0,(LPARAM)dlg.path());
-						}
-					}
-					break;
+					break; // Fixed EDB disk ROM selection.
 				case IDC_CLOCK:
 				case IDC_READONLY:
 					break;
@@ -624,11 +612,9 @@ void Load_Disk(unsigned char disk)
 	return;
 }
 
-unsigned char SetChip(unsigned char Tmp)
+unsigned char SetChip(unsigned char /*Tmp*/)
 {
-	if (Tmp!=QUERY)
-		SelectRom=Tmp;
-	return SelectRom;
+	return SelectRom; // EDB uses the external disk ROM only.
 }
 
 // Added for PakGetMenuItem export
@@ -1268,11 +1254,11 @@ void LoadConfig()  // Called on SetIniPath
 
 	Setting().read(MS_PATHS, "FloppyPath", "", FloppyPath, MAX_PATH);
 
-	SelectRom = Setting().read(MS_FD502,"DiskRom",1);  //0 External 1=TRSDOS 2=RGB Dos
-	Setting().read(MS_FD502,"RomPath","",RomFileName,MAX_PATH);
+	SetEdbDiskRom();
+	Setting().write(MS_FD502,"DiskRom",0);
+	Setting().write(MS_FD502,"RomPath",EdbDiskRomName);
 	PersistDisks=Setting().read(MS_FD502,"Persist",1);
-	CheckPath(RomFileName);
-	LoadExtRom(External,RomFileName); //JF
+	LoadExtRom(External,RomFileName);
 	const auto applicationDirectory =
 		std::filesystem::path(VCC::Util::ModulePath(nullptr)).parent_path();
 	DiskRomPath = (applicationDirectory / "disk11.rom").string();
@@ -1310,9 +1296,8 @@ void SaveConfig()
 {
 	unsigned char Index=0;
 	char Temp[16]="";
-	ValidatePath(RomFileName);
-	Setting().write(MS_FD502,"DiskRom",SelectRom );
-	Setting().write(MS_FD502,"RomPath",RomFileName);
+	Setting().write(MS_FD502,"DiskRom",0);
+	Setting().write(MS_FD502,"RomPath",EdbDiskRomName);
 	Setting().write(MS_FD502,"Persist",PersistDisks );
 	if (PersistDisks)
 		for (Index=0;Index<4;Index++)
