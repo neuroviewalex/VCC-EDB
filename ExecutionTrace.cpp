@@ -817,7 +817,7 @@ namespace VCC::Debugger::UI
 			Rect.bottom - 58 - ScrollBarTop,
 			hDlg,
 			(HMENU)IDT_TRC_VSCROLLBAR,
-			(HINSTANCE)GetWindowLong(hDlg, GWL_HINSTANCE),
+			(HINSTANCE)GetWindowLongPtr(hDlg, GWLP_HINSTANCE),
 			nullptr);
 
 		if (!hWndVScrollBar)
@@ -846,7 +846,7 @@ namespace VCC::Debugger::UI
 			ScrollBarWidth,
 			hDlg,
 			(HMENU)IDT_TRC_HSCROLLBAR,
-			(HINSTANCE)GetWindowLong(hDlg, GWL_HINSTANCE),
+			(HINSTANCE)GetWindowLongPtr(hDlg, GWLP_HINSTANCE),
 			nullptr);
 
 		if (!hWndVScrollBar)
