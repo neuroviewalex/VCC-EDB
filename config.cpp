@@ -132,6 +132,15 @@ static char gcIniFilePath[MAX_PATH]="";
 static char KeyMapFilePath[MAX_PATH]="";
 static char TapeFileName[MAX_PATH]="";
 static char ExecDirectory[MAX_PATH]="";
+static constexpr char EdbBasicRomName[] = "coco3_201_edb.rom";
+static constexpr char EdbDiskRomName[] = "disk_211_edb.rom";
+
+// The EDB ROM belongs to the executable, never to the INI or working directory.
+static void SetEdbBasicRom(STRConfig& config)
+{
+	config.UseExtCocoRom = 1;
+	Util::copy_to_char(Util::QualifyModPath(EdbBasicRomName), config.ExtRomFile, MAX_PATH);
+}
 static char SerialCaptureFile[MAX_PATH]="";
 static unsigned char NumberofJoysticks=0;
 TCHAR gcAppDataPath[MAX_PATH];
@@ -233,8 +242,7 @@ void InitialLoadConfig(SystemState *LCState)
 		Setting().write("Misc", "CartAutoStart", 1);
 		Setting().write("Misc", "UseExtCocoRom", 1);
 		Setting().write("Misc", "Overclock", 1);
-		Setting().write("Misc", "ExternalBasicImage",
-			(std::filesystem::path(ExecDirectory) / "coco3_201_edb.rom").string().c_str());
+		Setting().write("Misc", "ExternalBasicImage", EdbBasicRomName);
 
 		Setting().write("Module", "OnBoot", "mpi.dll");
 
@@ -245,8 +253,7 @@ void InitialLoadConfig(SystemState *LCState)
 		Setting().write("DefaultPaths", "CassPath", "");
 
 		Setting().write("FD-502", "DiskRom", 0);
-		Setting().write("FD-502", "RomPath",
-			(std::filesystem::path(ExecDirectory) / "disk_211_edb.rom").string().c_str());
+		Setting().write("FD-502", "RomPath", EdbDiskRomName);
 		Setting().write("FD-502", "Persist", 1);
 		Setting().write("FD-502", "ClkEnable", 1);
 		Setting().write("FD-502", "TurboDisk", 1);
@@ -406,13 +413,10 @@ unsigned char ReadIniFile()
 	CurrentConfig.AutoStart        = Setting().read("Misc","AutoStart",1);
 	CurrentConfig.CartAutoStart    = Setting().read("Misc","CartAutoStart",1);
 	CurrentConfig.ShowMousePointer = Setting().read("Misc","ShowMousePointer",1);
-	CurrentConfig.UseExtCocoRom    = Setting().read("Misc","UseExtCocoRom",0);
 	CurrentConfig.EnableOverclock  = Setting().read("Misc","Overclock",1);
-	Setting().read("Misc","ExternalBasicImage","",CurrentConfig.ExtRomFile,MAX_PATH);
-	if (*CurrentConfig.ExtRomFile) {
-		const auto romPath = Util::QualifyModPath(CurrentConfig.ExtRomFile);
-		Util::copy_to_char(romPath, CurrentConfig.ExtRomFile, MAX_PATH);
-	}
+	SetEdbBasicRom(CurrentConfig);
+	Setting().write("Misc","UseExtCocoRom",1);
+	Setting().write("Misc","ExternalBasicImage",EdbBasicRomName);
 
 	CurrentConfig.RamSize = Setting().read("Memory","RamSize",1);
 
@@ -499,9 +503,9 @@ void WriteCPUSettings() {
 	Setting().write("Memory","RamSize",CurrentConfig.RamSize);
 	Setting().write("Misc","AutoStart",CurrentConfig.AutoStart);
 	Setting().write("Misc","CartAutoStart",CurrentConfig.CartAutoStart);
-	Setting().write("Misc","UseExtCocoRom",CurrentConfig.UseExtCocoRom);
+	Setting().write("Misc","UseExtCocoRom",1);
 	Setting().write("Misc","Overclock", CurrentConfig.EnableOverclock);
-	Setting().write("Misc","ExternalBasicImage", CurrentConfig.ExtRomFile);
+	Setting().write("Misc","ExternalBasicImage", EdbBasicRomName);
 }
 void WriteAudioSettings() {
 	Setting().write("Audio","SndCard",CurrentConfig.SoundCardName);
@@ -685,6 +689,9 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 		SendDlgItemMessage(hDlg,IDC_USE_EXTROM,BM_SETCHECK,tmpcfg.UseExtCocoRom,0);
 		SendDlgItemMessage(hDlg,IDC_OVERCLOCK,BM_SETCHECK,tmpcfg.EnableOverclock,0);
 		SetDlgItemText(hDlg,IDC_ROMPATH,tmpcfg.ExtRomFile);
+		SendDlgItemMessage(hDlg,IDC_ROMPATH,EM_SETREADONLY,TRUE,0);
+		EnableWindow(GetDlgItem(hDlg,IDC_USE_EXTROM),FALSE);
+		EnableWindow(GetDlgItem(hDlg,IDC_BROWSE),FALSE);
 		break;
 
 	case WM_HSCROLL:
@@ -703,10 +710,8 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 		case IDOK:
 		case IDAPPLY:
 
-			// Get coco3.rom path from dialog if external
-			if (tmpcfg.UseExtCocoRom) {
-				GetDlgItemText(hDlg,IDC_ROMPATH,tmpcfg.ExtRomFile,MAX_PATH);
-			}
+			// The external EDB ROM cannot be overridden in this dialog.
+			SetEdbBasicRom(tmpcfg);
 
 			// It is important that Cpu settings are not changed while the
 			// emulation is actually running. ResetPending causes Vcc.c to
@@ -781,25 +786,13 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*lPar
 						SendDlgItemMessage(hDlg,IDC_AUTOCART,BM_GETCHECK,0,0);
 			break;
 		case IDC_USE_EXTROM:
-			tmpcfg.UseExtCocoRom = (unsigned char)
-						SendDlgItemMessage(hDlg,IDC_USE_EXTROM,BM_GETCHECK,0,0);
-			break;
+			break; // Fixed EDB ROM selection.
 		case IDC_OVERCLOCK:
 			tmpcfg.EnableOverclock = (unsigned char)
 						SendDlgItemMessage(hDlg,IDC_OVERCLOCK,BM_GETCHECK,0,0);
 			break;
-		case IDC_BROWSE: {
-				FileDialog dlg;
-				dlg.setInitialDir(ExecDirectory);
-				dlg.setFilter("Rom Image\0*.rom\0\0");
-				dlg.setTitle("Coco3 Rom Image");
-				dlg.setFlags(OFN_FILEMUSTEXIST);
-				if (dlg.show()) {
-					dlg.getupath(tmpcfg.ExtRomFile,MAX_PATH);
-					SetDlgItemText(hDlg,IDC_ROMPATH,tmpcfg.ExtRomFile);
-				}
-			}
-			break;
+		case IDC_BROWSE:
+			break; // Fixed EDB ROM path.
 		}		//End switch LOWORD(wParam)
 		break;	//Break WM_COMMAND
 	}			//END switch (message)
@@ -1819,8 +1812,5 @@ void CaptureCurrentWindowRect()
 //Called by tcc1014mmu:LoadRom
 void GetExtRomPath(char * RomPath)
 {
-	if (CurrentConfig.UseExtCocoRom)
-		strncpy(RomPath,CurrentConfig.ExtRomFile,MAX_PATH);
-	else
-		*RomPath = '\0';
+	Util::copy_to_char(Util::QualifyModPath(EdbBasicRomName), RomPath, MAX_PATH);
 }
