@@ -1,0 +1,96 @@
+name: Experimental VCC-EDB x64
+on:
+  push:
+    branches: [experimental-x64]
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  x64:
+    if: github.ref == 'refs/heads/experimental-x64' || github.head_ref == 'experimental-x64'
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
+      - name: Generate x64 Release configuration in disposable checkout
+        shell: python
+        run: |
+          import copy, pathlib, re, xml.etree.ElementTree as ET
+          ns = 'http://schemas.microsoft.com/developer/msbuild/2003'
+          ET.register_namespace('', ns)
+          solution = pathlib.Path('Vcc.sln')
+          s = solution.read_text(encoding='utf-8-sig')
+          projects = re.findall(r'^Project\("[^"]+"\) = "[^"]+", "([^"]+\.vcxproj)"', s, re.M | re.I)
+          assert len(projects) == 12, projects
+          lines = []
+          for line in s.splitlines():
+              lines.append(line)
+              if 'Release|x86' in line:
+                  lines.append(line.replace('Release|x86','Release|x64').replace('Release|Win32','Release|x64'))
+          solution.write_text('\n'.join(lines)+'\n', encoding='utf-8-sig')
+          def augment(parent):
+              for child in list(parent):
+                  if any('Release|Win32' in v for v in child.attrib.values()):
+                      clone = copy.deepcopy(child)
+                      for n in clone.iter():
+                          for k,v in list(n.attrib.items()):
+                              n.set(k,v.replace('Release|Win32','Release|x64'))
+                          if n.tag == '{'+ns+'}Platform' and n.text == 'Win32':
+                              n.text = 'x64'
+                      parent.insert(list(parent).index(child)+1, clone)
+                  else:
+                      augment(child)
+          for name in projects:
+              p = pathlib.Path(name)
+              t = ET.parse(p)
+              augment(t.getroot())
+              assert any(x.get('Include') == 'Release|x64' for x in t.getroot().iter('{'+ns+'}ProjectConfiguration')), name
+              t.write(p, encoding='utf-8', xml_declaration=True)
+              print('Added x64:', p)
+          p = pathlib.Path('vcc-release.props')
+          t = ET.parse(p)
+          for e in t.getroot().iter('{'+ns+'}ImageHasSafeExceptionHandlers'):
+              e.set('Condition', "'$(Platform)' == 'Win32'")
+          t.write(p, encoding='utf-8', xml_declaration=True)
+      - name: Build all x64 projects
+        shell: pwsh
+        run: |
+          msbuild Vcc.sln /m /p:Configuration=Release /p:Platform=x64 /bl:x64-build.binlog /fl "/flp:logfile=x64-build.log;verbosity=normal"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify PE architecture and required modules
+        shell: python
+        run: |
+          import pathlib, struct
+          root = pathlib.Path('__bin/x64/Release')
+          files = [p for p in root.iterdir() if p.suffix.lower() in ('.exe','.dll')]
+          assert {'vcc.exe','mpi.dll','fd502.dll'} <= {p.name.lower() for p in files}, files
+          for p in files:
+              b = p.read_bytes()
+              assert b[:2] == b'MZ', p
+              off = struct.unpack_from('<I',b,0x3c)[0]
+              assert b[off:off+4] == b'PE\x00\x00', p
+              assert struct.unpack_from('<H',b,off+4)[0] == 0x8664, p
+              print('AMD64:',p.name)
+      - name: Upload x64 binary candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: VCC-EDB-experimental-x64
+          path: |
+            __bin/x64/Release/*.exe
+            __bin/x64/Release/*.dll
+            __bin/x64/Release/*.pdb
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: VCC-EDB-x64-build-diagnostics
+          path: |
+            x64-build.log
+            x64-build.binlog
+          if-no-files-found: warn
+          retention-days: 7
